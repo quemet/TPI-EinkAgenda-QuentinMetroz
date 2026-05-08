@@ -1,0 +1,96 @@
+version: '3.8'
+
+services:
+  db:
+    image: mysql:8.0
+    container_name: app-db
+    restart: always
+    env_file:
+      - .env
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+    networks:
+      - db-be
+      - pma-db
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
+      interval: 1m30s
+      timeout: 30s
+      retries: 5
+      start_period: 30s
+
+  pma:
+    image: phpmyadmin/phpmyadmin
+    restart: always
+    container_name: app-phpmyadmin
+    environment:
+      PMA_HOST: db
+      PMA_PORT: 3306
+    ports:
+      - "8080:80"
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - pma-db
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: app-backend
+    restart: always
+    env_file:
+      - backend/.env
+    environment:
+      NODE_ENV: production
+      DB_HOST: db
+      DB_PORT: 3306
+      CORS_ORIGIN: http://localhost
+    ports:
+      - "3000:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - db-be
+      - be-fe
+      - be-client
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: app-frontend
+    restart: always
+    env_file:
+      - frontend/.env
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - be-fe
+
+volumes:
+  db_data:
+
+networks:
+  pma-db:
+    driver: bridge
+
+  db-be:
+    driver: bridge
+
+  be-fe:
+    driver: bridge
+
+  be-client:
+    driver: bridge
