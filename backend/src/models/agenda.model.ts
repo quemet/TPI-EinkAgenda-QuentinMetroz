@@ -1,10 +1,3 @@
-/*
-   agenda_id INT,
-   agenda_name VARCHAR(50) NOT NULL,
-   family_id INT NOT NULL,
-   PRIMARY KEY(agenda_id),
-   FOREIGN KEY(family_id) REFERENCES t_family(family_id)
-*/
 import {
   Model,
   DataTypes,
