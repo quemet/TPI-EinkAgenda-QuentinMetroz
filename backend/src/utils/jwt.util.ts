@@ -4,6 +4,7 @@ import { env } from '../config/env';
 import z from 'zod';
 import { verify, sign, TokenExpiredError, JsonWebTokenError, type SignOptions } from 'jsonwebtoken';
 import validTokenSchema from '../schemas/jwt.schema';
+import { AppError } from '../middlewares/error.middleware';
 
 const decodedAndValidate = <T extends z.ZodTypeAny>(
   token: string,
@@ -20,15 +21,15 @@ const decodedAndValidate = <T extends z.ZodTypeAny>(
     const decoded = verify(token, secret);
 
     if (typeof decoded !== 'object' || decoded === null) {
-      throw new Error(messages.invalidPayload);
+      throw new AppError(messages.invalidPayload, 400);
     }
 
     return schema.parse(decoded) as z.infer<T>;
   } catch (error) {
     if (error instanceof Error) throw error;
-    if (error instanceof TokenExpiredError) throw new Error(messages.expired);
-    if (error instanceof JsonWebTokenError) throw new Error(messages.invalid);
-    if (error instanceof z.ZodError) throw new Error(messages.invalidStructure);
+    if (error instanceof TokenExpiredError) throw new AppError(messages.expired, 401);
+    if (error instanceof JsonWebTokenError) throw new AppError(messages.invalid, 401);
+    if (error instanceof z.ZodError) throw new AppError(messages.invalidStructure, 401);
     throw error;
   }
 };
@@ -36,7 +37,7 @@ const decodedAndValidate = <T extends z.ZodTypeAny>(
 export const verifyToken = (token: string): JwtPayload => {
   const secret = env.JWT.SECRET;
 
-  if (!secret) throw new Error('JWT secret is not defined in environment variables');
+  if (!secret) throw new AppError('JWT secret is not defined', 500);
 
   const valdated = decodedAndValidate(token, secret, validTokenSchema, {
     invalidPayload: 'Invalid token payload',
@@ -63,7 +64,7 @@ export const extractToken = (req: ExtendedRequest): string | null => {
 export const generateToken = (payload: JwtPayload): string => {
   const secret = env.JWT.SECRET;
 
-  if (!secret) throw new Error('JWT secret is not defined in environment variables');
+  if (!secret) throw new AppError('JWT secret is not defined', 500);
 
   const accessToken = sign(payload, secret, {
     expiresIn: (env.JWT.EXPIRES_IN || '7d') as SignOptions['expiresIn'],
