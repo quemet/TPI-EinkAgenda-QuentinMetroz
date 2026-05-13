@@ -1,5 +1,6 @@
 import { initDatabase } from './config/db';
 import * as eventRouter from './routes/event.route';
+import * as authRouter from './routes/auth.route';
 import express from 'express';
 import { env } from './config/env';
 import cors from 'cors';
@@ -21,6 +22,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(globalLimiter);
 
 app.use('/api/events', eventRouter.default);
+app.use('/api/auth', authRouter.default);
 
 app.use(notFoundMiddleware);
 app.use(errorMiddleware);
