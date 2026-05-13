@@ -26,10 +26,10 @@ const decodedAndValidate = <T extends z.ZodTypeAny>(
 
     return schema.parse(decoded) as z.infer<T>;
   } catch (error) {
-    if (error instanceof Error) throw error;
     if (error instanceof TokenExpiredError) throw new AppError(messages.expired, 401);
     if (error instanceof JsonWebTokenError) throw new AppError(messages.invalid, 401);
     if (error instanceof z.ZodError) throw new AppError(messages.invalidStructure, 401);
+    if (error instanceof Error) throw error;
     throw error;
   }
 };

@@ -10,7 +10,7 @@ const eventBaseIdSchema = z.object({
 
 const eventBaseSchemaBody = z.object({
   name: z.string().min(1, 'Name is required'),
-  description: z.string().optional(),
+  description: z.string(),
   type: z.string().min(1, 'Type is required'),
   startDatetime: z.string().refine((date) => !isNaN(Date.parse(date)), {
     message: 'Invalid start datetime',
