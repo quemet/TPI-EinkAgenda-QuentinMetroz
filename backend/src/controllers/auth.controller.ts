@@ -1,8 +1,7 @@
-import ExtendedRequest from '../types/express.type';
-import { Response, NextFunction } from 'express';
+import { Response, NextFunction, Request } from 'express';
 import * as authService from '../services/auth.service';
 
-export const register = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
+export const register = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { email, password, username } = req.body;
     const user = await authService.register({ email, password, username });
@@ -12,7 +11,7 @@ export const register = async (req: ExtendedRequest, res: Response, next: NextFu
   }
 };
 
-export const login = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
+export const login = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { email, password } = req.body;
     const user = await authService.login({ email, password });

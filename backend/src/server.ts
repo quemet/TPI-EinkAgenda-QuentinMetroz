@@ -1,6 +1,7 @@
 import { initDatabase } from './config/db';
 import * as eventRouter from './routes/event.route';
 import * as authRouter from './routes/auth.route';
+import * as agendaRouter from './routes/agenda.route';
 import express from 'express';
 import { env } from './config/env';
 import cors from 'cors';
@@ -23,6 +24,7 @@ app.use(globalLimiter);
 
 app.use('/api/events', eventRouter.default);
 app.use('/api/auth', authRouter.default);
+app.use('/api/agendas', agendaRouter.default);
 
 app.use(notFoundMiddleware);
 app.use(errorMiddleware);
