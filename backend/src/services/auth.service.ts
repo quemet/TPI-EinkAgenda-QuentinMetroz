@@ -27,6 +27,7 @@ export const register = async (data: RegisterData) => {
   };
 
   const token = generateToken(payload);
+  user.password = ''; // Hide password in response
 
   return { user, token };
 };
@@ -51,6 +52,7 @@ export const login = async (data: LoginData) => {
   };
 
   const token = generateToken(payload);
+  user.password = ''; // Hide password in response
 
   return { user, token };
 };
