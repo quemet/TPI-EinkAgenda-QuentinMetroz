@@ -14,9 +14,9 @@ export const getAuthPayload = (req: ExtendedRequest): JwtPayload => {
   return verifyToken(token);
 };
 
-export const hashPassword = (password: string) => {
-  const salt = bcrypt.genSaltSync(10);
-  return bcrypt.hashSync(password, salt);
+export const hashPassword = async (password: string) => {
+  const salt = await bcrypt.genSalt(10);
+  return await bcrypt.hash(password, salt);
 };
 
 export const generateToken = (payload: JwtPayload) => {
@@ -31,6 +31,6 @@ export const generateToken = (payload: JwtPayload) => {
   return token;
 };
 
-export const comparePassword = (password: string, hashedPassword: string) => {
-  return bcrypt.compareSync(password, hashedPassword);
+export const comparePassword = async (password: string, hashedPassword: string) => {
+  return await bcrypt.compare(password, hashedPassword);
 };

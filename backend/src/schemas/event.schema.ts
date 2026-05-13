@@ -12,12 +12,8 @@ const eventBaseSchemaBody = z.object({
   name: z.string().min(1, 'Name is required'),
   description: z.string(),
   type: z.string().min(1, 'Type is required'),
-  startDatetime: z.string().refine((date) => !isNaN(Date.parse(date)), {
-    message: 'Invalid start datetime',
-  }),
-  endDatetime: z.string().refine((date) => !isNaN(Date.parse(date)), {
-    message: 'Invalid end datetime',
-  }),
+  startDatetime: z.coerce.date(),
+  endDatetime: z.coerce.date(),
 });
 
 export const getAllEventSchemaParams = agendaBaseIdSchema;
