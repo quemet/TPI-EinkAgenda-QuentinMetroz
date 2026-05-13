@@ -2,7 +2,7 @@ import ExtendedRequest from '../types/express.type';
 import JwtPayload from '../types/jwt.type';
 import { env } from '../config/env';
 import z from 'zod';
-import { verify, sign, TokenExpiredError, JsonWebTokenError, type SignOptions } from 'jsonwebtoken';
+import { verify, TokenExpiredError, JsonWebTokenError } from 'jsonwebtoken';
 import validTokenSchema from '../schemas/jwt.schema';
 import { AppError } from '../middlewares/error.middleware';
 
@@ -26,10 +26,10 @@ const decodedAndValidate = <T extends z.ZodTypeAny>(
 
     return schema.parse(decoded) as z.infer<T>;
   } catch (error) {
-    if (error instanceof Error) throw error;
     if (error instanceof TokenExpiredError) throw new AppError(messages.expired, 401);
     if (error instanceof JsonWebTokenError) throw new AppError(messages.invalid, 401);
     if (error instanceof z.ZodError) throw new AppError(messages.invalidStructure, 401);
+    if (error instanceof Error) throw error;
     throw error;
   }
 };
@@ -59,16 +59,4 @@ export const extractToken = (req: ExtendedRequest): string | null => {
   if (scheme !== 'Bearer') return null;
 
   return token;
-};
-
-export const generateToken = (payload: JwtPayload): string => {
-  const secret = env.JWT.SECRET;
-
-  if (!secret) throw new AppError('JWT secret is not defined', 500);
-
-  const accessToken = sign(payload, secret, {
-    expiresIn: (env.JWT.EXPIRES_IN || '7d') as SignOptions['expiresIn'],
-  });
-
-  return accessToken;
 };
