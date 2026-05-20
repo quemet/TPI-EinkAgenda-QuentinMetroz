@@ -7,8 +7,8 @@
     "dev": "nodemon --watch src/**/*.ts --exec ts-node src/server.ts",
     "build": "tsc",
     "start": "node dist/server.js",
-    "test": "jest --runInBand",
-    "test:coverage": "jest --coverage --runInBand"
+    "test": "jest --runInBand --detectOpenHandles",
+    "test:coverage": "jest --coverage --runInBand --detectOpenHandles"
   },
   "keywords": [],
   "author": "Quentin Métroz",
@@ -23,6 +23,8 @@
     "jsonwebtoken": "^9.0.3",
     "mysql2": "^3.22.3",
     "sequelize": "^6.37.8",
+    "swagger-ui-express": "^5.0.1",
+    "yaml": "^2.9.0",
     "zod": "^4.4.3"
   },
   "devDependencies": {
@@ -36,11 +38,13 @@
     "@types/node": "^25.6.2",
     "@types/sequelize": "^4.28.20",
     "@types/supertest": "^7.2.0",
+    "@types/swagger-ui-express": "^4.1.8",
     "eslint": "^10.3.0",
     "jest": "^30.4.2",
     "jiti": "^2.7.0",
     "nodemon": "^3.1.14",
     "prettier": "^3.8.3",
+    "sqlite3": "^6.0.1",
     "supertest": "^7.2.2",
     "ts-jest": "^29.4.9",
     "ts-node": "^10.9.2",

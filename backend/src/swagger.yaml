@@ -1,0 +1,1319 @@
+openapi: 3.0.0
+
+info:
+  title: EInk Agenda API
+  version: 1.0.0
+  description: |
+    REST API for managing families, agendas, events, and users in the EInk Agenda application.
+
+    ## Authentication
+    Most endpoints require a JWT bearer token. Obtain one via `POST /api/auth/register` or
+    `POST /api/auth/login`, then send it in the `Authorization: Bearer <token>` header.
+
+    ## Rate limiting
+    - Global limiter: 100 requests per 15 minutes per IP on every endpoint.
+    - Auth limiter: 10 requests per 15 minutes per IP on `/api/auth/register` and `/api/auth/login`.
+
+    ## Error format
+    All error responses follow one of three JSON shapes documented in `ErrorResponse`,
+    `ValidationErrorResponse`, and `ConflictErrorResponse`.
+  contact:
+    name: Quentin Métroz
+
+servers:
+  - url: http://localhost:3000
+    description: Local development server
+
+tags:
+  - name: Authentication
+    description: User registration and login
+  - name: Family
+    description: Family management (membership, admins)
+  - name: Agenda
+    description: Agenda management inside a family
+  - name: Events
+    description: Event management inside an agenda
+  - name: Users
+    description: User-related schemas
+
+security:
+  - BearerAuth: []
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token returned by `/api/auth/register` or `/api/auth/login`.
+
+  schemas:
+    # ---------- Entity schemas ----------
+
+    User:
+      type: object
+      description: Authenticated user. The `password` field is never returned by the API.
+      required:
+        - id
+        - username
+        - email
+        - role
+        - personType
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: '123e4567-e89b-12d3-a456-426614174000'
+        username:
+          type: string
+          example: 'john_doe'
+        email:
+          type: string
+          format: email
+          example: 'john.doe@example.com'
+        role:
+          type: string
+          enum: [user, family-admin, app-admin]
+          example: 'user'
+        personType:
+          type: string
+          enum: [young, elder]
+          example: 'young'
+        createdAt:
+          type: string
+          format: date-time
+          readOnly: true
+        updatedAt:
+          type: string
+          format: date-time
+          readOnly: true
+
+    Family:
+      type: object
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: '123e4567-e89b-12d3-a456-426614174000'
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+          example: 'Smith Family'
+        createdAt:
+          type: string
+          format: date-time
+          readOnly: true
+        updatedAt:
+          type: string
+          format: date-time
+          readOnly: true
+
+    Agenda:
+      type: object
+      required:
+        - id
+        - name
+        - familyId
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: '123e4567-e89b-12d3-a456-426614174000'
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+          example: 'Smith Family Agenda'
+        familyId:
+          type: string
+          format: uuid
+          description: ID of the family this agenda belongs to.
+          example: '123e4567-e89b-12d3-a456-426614174000'
+        createdAt:
+          type: string
+          format: date-time
+          readOnly: true
+        updatedAt:
+          type: string
+          format: date-time
+          readOnly: true
+
+    Event:
+      type: object
+      required:
+        - id
+        - name
+        - description
+        - type
+        - startDatetime
+        - endDatetime
+        - agendaId
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: '123e4567-e89b-12d3-a456-426614174000'
+        name:
+          type: string
+          minLength: 1
+          example: 'Doctor Appointment'
+        description:
+          type: string
+          example: 'Annual check-up with Dr. Smith at 10 AM.'
+        type:
+          type: string
+          minLength: 1
+          description: Free-form category (e.g. `appointment`, `medication`, `activity`).
+          example: 'appointment'
+        startDatetime:
+          type: string
+          format: date-time
+          example: '2024-07-01T10:00:00Z'
+        endDatetime:
+          type: string
+          format: date-time
+          example: '2024-07-01T11:00:00Z'
+        agendaId:
+          type: string
+          format: uuid
+          description: ID of the agenda this event belongs to.
+          example: '123e4567-e89b-12d3-a456-426614174000'
+        createdAt:
+          type: string
+          format: date-time
+          readOnly: true
+        updatedAt:
+          type: string
+          format: date-time
+          readOnly: true
+
+    Belong:
+      type: object
+      description: Junction record linking a user to a family they are a member of. No timestamps.
+      required:
+        - family_id
+        - user_id
+      properties:
+        family_id:
+          type: string
+          format: uuid
+          example: '123e4567-e89b-12d3-a456-426614174000'
+        user_id:
+          type: string
+          format: uuid
+          example: '123e4567-e89b-12d3-a456-426614174000'
+
+    Appertain:
+      type: object
+      description: Junction record linking a family to one of its administrators.
+      required:
+        - family_id
+        - family_adminId
+      properties:
+        family_id:
+          type: string
+          format: uuid
+          example: '123e4567-e89b-12d3-a456-426614174000'
+        family_adminId:
+          type: string
+          format: uuid
+          description: ID of the user who is an admin of the family.
+          example: '123e4567-e89b-12d3-a456-426614174000'
+        createdAt:
+          type: string
+          format: date-time
+          readOnly: true
+        updatedAt:
+          type: string
+          format: date-time
+          readOnly: true
+
+    # ---------- Request body schemas ----------
+
+    RegisterRequest:
+      type: object
+      required:
+        - email
+        - password
+        - username
+      properties:
+        email:
+          type: string
+          format: email
+          example: 'john.doe@example.com'
+        password:
+          type: string
+          format: password
+          minLength: 6
+          example: 'securePassword123'
+        username:
+          type: string
+          minLength: 3
+          example: 'john_doe'
+
+    LoginRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          example: 'john.doe@example.com'
+        password:
+          type: string
+          format: password
+          minLength: 6
+          example: 'securePassword123'
+
+    CreateEventRequest:
+      type: object
+      required:
+        - name
+        - description
+        - type
+        - startDatetime
+        - endDatetime
+      properties:
+        name:
+          type: string
+          minLength: 1
+          example: 'Doctor Appointment'
+        description:
+          type: string
+          example: 'Annual check-up with Dr. Smith at 10 AM.'
+        type:
+          type: string
+          minLength: 1
+          example: 'appointment'
+        startDatetime:
+          type: string
+          format: date-time
+          example: '2024-07-01T10:00:00Z'
+        endDatetime:
+          type: string
+          format: date-time
+          example: '2024-07-01T11:00:00Z'
+
+    UpdateEventRequest:
+      type: object
+      description: Partial update. Send only the fields you want to change.
+      properties:
+        name:
+          type: string
+          minLength: 1
+          example: 'Doctor Appointment (rescheduled)'
+        description:
+          type: string
+        type:
+          type: string
+          minLength: 1
+        startDatetime:
+          type: string
+          format: date-time
+        endDatetime:
+          type: string
+          format: date-time
+
+    CreateAgendaRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+          example: 'Smith Family Agenda'
+
+    UpdateAgendaRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+          example: 'Smith Family Agenda (renamed)'
+
+    CreateFamilyRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+          example: 'Smith Family'
+
+    UpdateFamilyRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+          example: 'Smith Family (renamed)'
+
+    UserIdBody:
+      type: object
+      description: Body shape used to add or remove a user/admin from a family.
+      required:
+        - userId
+      properties:
+        userId:
+          type: string
+          format: uuid
+          example: '123e4567-e89b-12d3-a456-426614174000'
+
+    # ---------- Response wrapper schemas ----------
+
+    AuthResponse:
+      type: object
+      required:
+        - user
+        - token
+      properties:
+        user:
+          $ref: '#/components/schemas/User'
+        token:
+          type: string
+          description: 'Signed JWT to send in the `Authorization: Bearer <token>` header.'
+          example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
+
+    MessageResponse:
+      type: object
+      required:
+        - message
+      properties:
+        message:
+          type: string
+          example: 'Operation completed successfully'
+
+    # ---------- Error schemas ----------
+
+    ErrorResponse:
+      type: object
+      description: Generic error response (AppError shape).
+      required:
+        - status
+        - error
+      properties:
+        status:
+          type: integer
+          example: 400
+        error:
+          type: string
+          example: 'Email already in use'
+
+    ValidationErrorResponse:
+      type: object
+      description: Response shape for Zod or Sequelize validation failures.
+      required:
+        - status
+        - message
+        - errors
+      properties:
+        status:
+          type: integer
+          example: 422
+        message:
+          type: string
+          example: 'Validation failed'
+        errors:
+          type: array
+          items:
+            type: object
+            required:
+              - field
+              - message
+            properties:
+              field:
+                type: string
+                example: 'password'
+              message:
+                type: string
+                example: 'Too small: expected string to have >=6 characters'
+              type:
+                type: string
+                description: Sequelize validation type (only present for Sequelize validation errors).
+                example: 'Validation error'
+
+    ConflictErrorResponse:
+      type: object
+      description: Response shape for unique-constraint or foreign-key conflicts.
+      required:
+        - status
+        - message
+      properties:
+        status:
+          type: integer
+          example: 409
+        message:
+          type: string
+          example: 'Duplicate entry for field(s): email'
+        fields:
+          type: array
+          items:
+            type: string
+          example: ['email']
+        detail:
+          type: string
+          description: Present for foreign-key violations.
+        table:
+          type: string
+          description: Present for foreign-key violations.
+
+    RateLimitErrorResponse:
+      type: object
+      required:
+        - status
+        - error
+      properties:
+        status:
+          type: integer
+          example: 429
+        error:
+          type: string
+          example: 'Too many requests, please try again later.'
+
+  responses:
+    UnauthorizedError:
+      description: Missing, invalid, or expired JWT token.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            missingToken:
+              value: { status: 401, error: 'Authorization token is missing' }
+            expiredToken:
+              value: { status: 401, error: 'Token has expired' }
+            invalidToken:
+              value: { status: 401, error: 'Invalid token' }
+
+    ForbiddenError:
+      description: The authenticated user does not have permission to access this resource (e.g. not a member or not an admin of the family).
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            status: 403
+            error: 'Access denied'
+
+    NotFoundError:
+      description: The requested resource was not found.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            status: 404
+            error: 'Resource not found'
+
+    ValidationError:
+      description: Request body or path/query parameters failed validation.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ValidationErrorResponse'
+
+    ConflictError:
+      description: Conflict with current state (duplicate key, foreign-key violation, etc.).
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ConflictErrorResponse'
+
+    BadRequestError:
+      description: The request is invalid for business reasons (e.g. trying to remove a family admin).
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            status: 400
+            error: 'Cannot remove an admin from the family'
+
+    RateLimitError:
+      description: Too many requests from this IP. See rate-limit headers.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/RateLimitErrorResponse'
+
+    InternalServerError:
+      description: Unexpected server error.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            status: 500
+            error: 'Internal server error'
+
+    ServiceUnavailableError:
+      description: Database connection failed or service is unavailable.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            status: 503
+            error: 'Database connection failed'
+
+paths:
+  # =========================================================================
+  # Authentication
+  # =========================================================================
+
+  /api/auth/register:
+    post:
+      tags: [Authentication]
+      summary: Register a new user
+      description: |
+        Creates a new user account with the default `role: user` and `personType: young`,
+        then returns the user and a signed JWT. Public endpoint (no Bearer token required)
+        but rate-limited to 10 requests per 15 minutes per IP.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '201':
+          description: User created successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          description: Email already in use.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                status: 400
+                error: 'Email already in use'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '429':
+          $ref: '#/components/responses/RateLimitError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailableError'
+
+  /api/auth/login:
+    post:
+      tags: [Authentication]
+      summary: Log in an existing user
+      description: |
+        Authenticates a user via email and password and returns a fresh JWT.
+        Public endpoint (no Bearer token required) but rate-limited to 10 requests per 15 minutes per IP.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Authentication successful.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          description: Invalid email or password.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                status: 401
+                error: 'Invalid email or password'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '429':
+          $ref: '#/components/responses/RateLimitError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailableError'
+
+  # =========================================================================
+  # Events
+  # =========================================================================
+
+  /api/events/agenda/{agendaId}/events:
+    get:
+      tags: [Events]
+      summary: List all events in an agenda
+      description: Returns every event attached to the given agenda. The authenticated user must be a member of the family that owns the agenda.
+      parameters:
+        - name: agendaId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: List of events.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Event'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '429':
+          $ref: '#/components/responses/RateLimitError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailableError'
+
+    post:
+      tags: [Events]
+      summary: Create an event in an agenda
+      description: Creates a new event under the given agenda. The authenticated user must be a member of the family that owns the agenda.
+      parameters:
+        - name: agendaId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateEventRequest'
+      responses:
+        '201':
+          description: Event created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Event'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '429':
+          $ref: '#/components/responses/RateLimitError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailableError'
+
+  /api/events/{eventId}:
+    get:
+      tags: [Events]
+      summary: Get a single event by ID
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Event details.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Event'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '429':
+          $ref: '#/components/responses/RateLimitError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailableError'
+
+    put:
+      tags: [Events]
+      summary: Update an event
+      description: Partially update an event. Only the fields provided are changed.
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateEventRequest'
+      responses:
+        '200':
+          description: Updated event.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Event'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '429':
+          $ref: '#/components/responses/RateLimitError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailableError'
+
+    delete:
+      tags: [Events]
+      summary: Delete an event
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Event deleted successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+              example:
+                message: 'Event deleted successfully'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '429':
+          $ref: '#/components/responses/RateLimitError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailableError'
+
+  # =========================================================================
+  # Agendas
+  # =========================================================================
+
+  /api/agendas/{familyId}:
+    get:
+      tags: [Agenda]
+      summary: List all agendas in a family
+      description: Returns every agenda belonging to the given family. The authenticated user must be a member of that family.
+      parameters:
+        - name: familyId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: List of agendas.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Agenda'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '429':
+          $ref: '#/components/responses/RateLimitError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailableError'
+
+    post:
+      tags: [Agenda]
+      summary: Create an agenda in a family
+      parameters:
+        - name: familyId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAgendaRequest'
+      responses:
+        '201':
+          description: Agenda created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Agenda'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '429':
+          $ref: '#/components/responses/RateLimitError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailableError'
+
+  /api/agendas/{familyId}/{id}:
+    get:
+      tags: [Agenda]
+      summary: Get a single agenda by ID inside a family
+      parameters:
+        - name: familyId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Agenda details.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Agenda'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '429':
+          $ref: '#/components/responses/RateLimitError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailableError'
+
+  /api/agendas/{id}:
+    put:
+      tags: [Agenda]
+      summary: Rename an agenda
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateAgendaRequest'
+      responses:
+        '200':
+          description: Updated agenda.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Agenda'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '429':
+          $ref: '#/components/responses/RateLimitError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailableError'
+
+    delete:
+      tags: [Agenda]
+      summary: Delete an agenda
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Agenda deleted successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+              example:
+                message: 'Agenda deleted successfully'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '429':
+          $ref: '#/components/responses/RateLimitError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailableError'
+
+  # =========================================================================
+  # Families
+  # =========================================================================
+
+  /api/families/:
+    get:
+      tags: [Family]
+      summary: List the authenticated user's families
+      description: Returns every family the authenticated user belongs to (via the `Belong` junction).
+      responses:
+        '200':
+          description: List of families (possibly empty).
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Family'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '429':
+          $ref: '#/components/responses/RateLimitError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailableError'
+
+    post:
+      tags: [Family]
+      summary: Create a new family
+      description: |
+        Creates a new family. The authenticated user automatically becomes a member
+        (`Belong` record) and an admin (`Appertain` record) of this family in a single transaction.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateFamilyRequest'
+      responses:
+        '201':
+          description: Family created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Family'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '429':
+          $ref: '#/components/responses/RateLimitError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailableError'
+
+  /api/families/{familyId}:
+    get:
+      tags: [Family]
+      summary: Get a family by ID
+      parameters:
+        - name: familyId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Family details.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Family'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '429':
+          $ref: '#/components/responses/RateLimitError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailableError'
+
+    put:
+      tags: [Family]
+      summary: Rename a family
+      parameters:
+        - name: familyId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateFamilyRequest'
+      responses:
+        '200':
+          description: Updated family.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Family'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '429':
+          $ref: '#/components/responses/RateLimitError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailableError'
+
+    delete:
+      tags: [Family]
+      summary: Delete a family
+      description: |
+        Deletes the family and cascades through `Belong`, `Appertain`, all of its agendas
+        and the events within them, in a single transaction. The authenticated user must
+        be an admin of the family.
+      parameters:
+        - name: familyId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Family deleted.
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '429':
+          $ref: '#/components/responses/RateLimitError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailableError'
+
+  /api/families/{familyId}/users:
+    post:
+      tags: [Family]
+      summary: Add a user to a family
+      parameters:
+        - name: familyId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserIdBody'
+      responses:
+        '201':
+          description: User added to the family. Empty response body.
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '409':
+          description: The user already belongs to this family.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConflictErrorResponse'
+              example:
+                status: 409
+                message: 'User already belongs to this family'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '429':
+          $ref: '#/components/responses/RateLimitError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailableError'
+
+    delete:
+      tags: [Family]
+      summary: Remove a user from a family
+      description: |
+        Removes a non-admin user from the family. The authenticated user must be an admin
+        of the family. Admins cannot be removed via this endpoint.
+      parameters:
+        - name: familyId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserIdBody'
+      responses:
+        '204':
+          description: User removed from the family.
+        '400':
+          description: The target user is an admin and cannot be removed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                status: 400
+                error: 'Cannot remove an admin from the family'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '429':
+          $ref: '#/components/responses/RateLimitError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailableError'
+
+  /api/families/{familyId}/admins:
+    post:
+      tags: [Family]
+      summary: Promote a user to family admin
+      description: Grants admin rights on the family to the given user. The authenticated user must already be an admin of the family.
+      parameters:
+        - name: familyId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserIdBody'
+      responses:
+        '201':
+          description: User promoted to admin. Empty response body.
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '409':
+          description: The user is already an admin of this family.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConflictErrorResponse'
+              example:
+                status: 409
+                message: 'User is already an admin of this family'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '429':
+          $ref: '#/components/responses/RateLimitError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailableError'
