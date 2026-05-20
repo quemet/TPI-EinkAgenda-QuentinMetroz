@@ -1,12 +1,12 @@
 import { AppError } from '../middlewares/error.middleware';
 import Agenda from '../models/agenda.model';
-import { isUserCanAccess } from '../utils/agenda.util';
+import { isUserCanAccess, isUserCanAccessFamily } from '../utils/agenda.util';
 
 export const getAllAgendas = async (familyId: string, userId: string) => {
+  await isUserCanAccessFamily(familyId, userId);
   const agendas = await Agenda.findAll({ where: { familyId } });
   if (agendas.length === 0) throw new AppError('No agendas found', 404);
-  const accessibleAgendas = agendas.filter((agenda) => isUserCanAccess(agenda, userId));
-  return accessibleAgendas;
+  return agendas;
 };
 
 export const getAgendaById = async (id: string, familyId: string, userId: string) => {
@@ -17,7 +17,8 @@ export const getAgendaById = async (id: string, familyId: string, userId: string
   return agenda;
 };
 
-export const createAgenda = async (name: string, familyId: string) => {
+export const createAgenda = async (name: string, familyId: string, userId: string) => {
+  await isUserCanAccessFamily(familyId, userId);
   const agenda = await Agenda.create({ name, familyId });
   return agenda;
 };

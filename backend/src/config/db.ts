@@ -11,7 +11,7 @@ const sequelize = new Sequelize(env.DB.NAME, env.DB.USER, env.DB.PASSWORD, {
   host: env.DB.HOST,
   port: Number(env.DB.PORT) || 3306,
   dialect: 'mysql',
-  logging: true,
+  logging: false,
 });
 
 Agenda.initModel(sequelize);
