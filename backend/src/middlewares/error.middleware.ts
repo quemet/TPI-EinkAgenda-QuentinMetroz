@@ -34,7 +34,7 @@ export const errorMiddleware = (
   if (err instanceof z.ZodError) {
     res.status(422).json({
       status: 422,
-      message: 'Validation failed',
+      error: 'Validation of the data failed',
       errors: err.issues.map((issue) => ({
         field: issue.path.join('.'),
         message: issue.message,
