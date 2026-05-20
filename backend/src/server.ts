@@ -7,7 +7,7 @@ import * as userRouter from './routes/user.route';
 import express from 'express';
 import { env } from './config/env';
 import cors from 'cors';
-import { globalLimiter } from './middlewares/rateLimit.middleware';
+// import { globalLimiter } from './middlewares/rateLimit.middleware';
 import { errorMiddleware } from './middlewares/error.middleware';
 import { notFoundMiddleware } from './middlewares/notFound.middleware';
 import swaggerUi from 'swagger-ui-express';
@@ -28,7 +28,7 @@ app.use(
 );
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(globalLimiter);
+// app.use(globalLimiter);
 
 app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 

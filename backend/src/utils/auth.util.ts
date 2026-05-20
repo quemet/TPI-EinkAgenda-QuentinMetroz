@@ -15,7 +15,7 @@ export const getAuthPayload = (req: ExtendedRequest): JwtPayload => {
 };
 
 export const hashPassword = async (password: string) => {
-  const salt = await bcrypt.genSalt(10);
+  const salt = await bcrypt.genSalt(env.SECURITY.SALT_ROUNDS);
   return await bcrypt.hash(password, salt);
 };
 

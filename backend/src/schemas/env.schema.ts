@@ -12,6 +12,7 @@ const envSchema = z.object({
   PORT: z.string(),
   CORS_ORIGIN: z.string().url(),
   NODE_ENV: z.enum(['development', 'production', 'test']),
+  SALT_ROUNDS: z.coerce.number().int().positive(),
 });
 
 export default envSchema;
