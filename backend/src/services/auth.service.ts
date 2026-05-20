@@ -13,7 +13,7 @@ export const register = async (data: RegisterData) => {
   const user = await User.create({
     username,
     email,
-    password: hashPassword(password),
+    password: await hashPassword(password),
     role: 'user', // Default role
     personType: 'young', // Default person type
   });
@@ -39,7 +39,7 @@ export const login = async (data: LoginData) => {
 
   if (!user) throw new AppError('Invalid email or password', 401);
 
-  const isMatch = comparePassword(password, user.password);
+  const isMatch = await comparePassword(password, user.password);
 
   if (!isMatch) throw new AppError('Invalid email or password', 401);
 
