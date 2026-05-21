@@ -14,6 +14,12 @@ const router = createRouter({
       props: true,
       component: () => import('../pages/AgendaPage.vue'),
     },
+    {
+      path: '/dashboard/:familyId',
+      name: 'dashboard',
+      props: true,
+      component: () => import('../pages/DashboardView.vue'),
+    },
   ],
 })
 
