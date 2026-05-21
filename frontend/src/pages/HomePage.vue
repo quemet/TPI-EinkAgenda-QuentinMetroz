@@ -2,59 +2,24 @@
 import SidebarComponent from '@/components/sidebar/SidebarComponent.vue'
 import HeaderComponent from '@/components/header/HeaderComponent.vue'
 import { ref, onMounted } from 'vue'
-import axios from 'axios'
+import { useRouter } from 'vue-router'
+import { getUserInfo, getFamilies, getAllAgendas, createFamily } from '@/services/home.service'
 
-const getFamilies = async (token: string) => {
-  try {
-    const res = await axios.get('http://localhost:3000/api/families', {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    })
-    return res.data
-  } catch (error) {
-    if (error instanceof Error) {
-      console.error('Error fetching families:', error.message)
-    } else {
-      console.error('Unknown error fetching families:', error)
-    }
-  }
-}
-
-const getAllAgendas = async (token: string, families: { id: number }[]) => {
-  await Promise.all(
-    families.map(async (fam) => {
-      try {
-        const agendaRes = await axios.get(`http://localhost:3000/api/agendas/${fam.id}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        })
-        const agenda = agendaRes.data
-        agenda.forEach((ag: { id: number; name: string }) => {
-          agendas.value.push({ id: ag.id, name: ag.name })
-        })
-      } catch {
-        console.info(`No agenda found for family`)
-      }
-    }),
-  )
-}
-
-const getUserInfo = async (token: string) => {
-  try {
-    const res = await axios.get('http://localhost:3000/api/user', {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    })
-    return res.data
-  } catch (error) {
-    if (error instanceof Error) {
-      console.error('Error fetching user info:', error.message)
-    } else {
-      console.error('Unknown error fetching user info:', error)
-    }
-  }
-}
+const token = localStorage.getItem('token') || ''
+const familyName = ref('')
+const router = useRouter()
+const dialogRef = ref<HTMLDialogElement | null>(null)
+const user = ref<{ id: string; username: string; email: string } | null>(null)
+const families = ref<{ id: string; name: string }[]>([])
+const agendas = ref<{ id: string; name: string }[]>([])
+const date = ref(
+  new Date().toLocaleDateString('fr-CH', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  }),
+)
 
 onMounted(async () => {
   try {
@@ -69,9 +34,11 @@ onMounted(async () => {
 
     families.value = await getFamilies(token)
 
-    await getAllAgendas(token, families.value)
+    const apiAgendas = await getAllAgendas(token, families.value)
 
-    console.log('Agendas:', agendas.value)
+    apiAgendas.forEach((agenda: { id: string; name: string }) => {
+      agendas.value.push({ id: agenda.id, name: agenda.name })
+    })
   } catch (error) {
     if (error instanceof Error) {
       console.error('Error during login:', error.message)
@@ -80,30 +47,19 @@ onMounted(async () => {
     }
   }
 })
-
-const user = ref<{ id: string; username: string; email: string } | null>(null) // TODO: Get the user data from the store or API
-const families = ref<{ id: number; name: string }[]>([]) // TODO: Fetch families from the API
-const agendas = ref<{ id: number; name: string }[]>([]) // TODO: Fetch agenda items from the API
-const date = ref(
-  new Date().toLocaleDateString('fr-CH', {
-    weekday: 'long',
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  }),
-)
 </script>
 
 <template>
   <div class="flex flex-col h-screen">
-    <HeaderComponent />
+    <HeaderComponent :families="families" />
     <div class="flex-1 flex">
       <SidebarComponent />
-      <div class="bg-[#F0EEE9] p-6 w-full h-full flex flex-col">
+      <div class="bg-[#F0EEE9] p-6 flex flex-col w-full">
         <div class="flex items-center justify-between mb-2">
           <p class="text-sm text-gray-500">{{ date }}</p>
           <button
             class="bg-[#009CAA] text-white py-1.5 px-4 rounded-full text-sm hover:bg-[#007a88]"
+            @click="dialogRef?.showModal()"
           >
             + Créer une famille
           </button>
@@ -113,7 +69,8 @@ const date = ref(
           <div
             v-for="agenda in agendas"
             :key="agenda.id"
-            class="bg-white rounded border border-gray-200 aspect-square flex items-end p-3 text-sm text-gray-600 cursor-pointer hover:shadow"
+            class="bg-white rounded border border-gray-200 aspect-square flex items-end p-3 text-sm text-gray-600 cursor-pointer hover:shadow w-[80%]"
+            @click="() => router.push(`/agenda/${agenda.id}`)"
           >
             {{ agenda.name }}
           </div>
@@ -122,4 +79,52 @@ const date = ref(
       </div>
     </div>
   </div>
+
+  <dialog
+    ref="dialogRef"
+    class="rounded-lg border border-gray-300 p-0 ml-auto mr-auto mt-auto mb-auto"
+  >
+    <div class="flex flex-col p-6 w-[400px]">
+      <div>
+        <h2 class="text-lg font-bold mb-4">Créer une famille</h2>
+        <div class="border-b border-gray-300"></div>
+      </div>
+
+      <div>
+        <form>
+          <label for="familyName" class="block text-sm font-medium text-gray-700 mb-1"
+            >Nom de la famille</label
+          >
+          <input
+            type="text"
+            id="familyName"
+            name="familyName"
+            class="w-full border border-gray-300 rounded px-3 py-2 mb-4 focus:outline-none focus:ring-2 focus:ring-[#009CAA]"
+            v-model="familyName"
+          />
+          <div class="flex justify-end">
+            <button
+              type="button"
+              class="bg-gray-300 text-gray-700 py-1.5 px-4 rounded mr-2 hover:bg-gray-400"
+              @click="dialogRef?.close()"
+            >
+              Annuler
+            </button>
+            <button
+              type="button"
+              class="bg-[#009CAA] text-white py-1.5 px-4 rounded hover:bg-[#007a88]"
+              @click="
+                createFamily(familyName, token).then((data) => {
+                  families.push({ id: data.id, name: data.name })
+                  dialogRef?.close()
+                })
+              "
+            >
+              Créer
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </dialog>
 </template>
