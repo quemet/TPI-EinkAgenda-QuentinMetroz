@@ -113,8 +113,7 @@ export const removeUserFromFamily = async (
   res: Response,
   next: NextFunction,
 ) => {
-  const { familyId } = req.params as { familyId: string };
-  const targetUserId = req.body.userId;
+  const { familyId, targetUserId } = req.params as { familyId: string; targetUserId: string };
   const userId = req.user!.id;
 
   try {

@@ -1,7 +1,9 @@
 import z from 'zod';
 
-const updateMeSchemaBody = z.object({
-  type: z.enum(['young', 'elder']),
+export const getFamilyUsersSchemaParams = z.object({
+  familyId: z.string().uuid(),
 });
 
-export default updateMeSchemaBody;
+export const updateMeSchemaBody = z.object({
+  type: z.enum(['young', 'elder']),
+});

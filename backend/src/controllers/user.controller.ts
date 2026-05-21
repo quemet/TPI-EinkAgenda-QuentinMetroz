@@ -13,6 +13,17 @@ export const getMe = async (req: ExtendedRequest, res: Response, next: NextFunct
   }
 };
 
+export const getFamilyUsers = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
+  const familyId = req.params.familyId as string;
+
+  try {
+    const users = await userService.getFamilyUsers(familyId);
+    res.json(users);
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const updateMe = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
   const userId = req.user!.id;
   const { type } = req.body as { type: 'young' | 'elder' };
