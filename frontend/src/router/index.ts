@@ -8,6 +8,12 @@ const router = createRouter({
       name: 'home',
       component: () => import('../pages/HomePage.vue'),
     },
+    {
+      path: '/agenda/:agendaId',
+      name: 'agenda',
+      props: true,
+      component: () => import('../pages/AgendaPage.vue'),
+    },
   ],
 })
 

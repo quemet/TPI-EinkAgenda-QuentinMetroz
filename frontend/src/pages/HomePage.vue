@@ -39,6 +39,23 @@ const getAllAgendas = async (token: string, families: { id: number }[]) => {
   )
 }
 
+const getUserInfo = async (token: string) => {
+  try {
+    const res = await axios.get('http://localhost:3000/api/user', {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
+    return res.data
+  } catch (error) {
+    if (error instanceof Error) {
+      console.error('Error fetching user info:', error.message)
+    } else {
+      console.error('Unknown error fetching user info:', error)
+    }
+  }
+}
+
 onMounted(async () => {
   try {
     const token = localStorage.getItem('token')
@@ -48,15 +65,9 @@ onMounted(async () => {
       return
     }
 
-    user.value = { id: '1', username: 'JohnDoe', email: 'john.doe@example.com' } // TODO: Decode user info from token or fetch from API
+    user.value = await getUserInfo(token)
 
-    localStorage.setItem('token', token)
-
-    const fams = await getFamilies(token)
-    families.value = fams.map((fam: { id: number; name: string }) => ({
-      id: fam.id,
-      name: fam.name,
-    }))
+    families.value = await getFamilies(token)
 
     await getAllAgendas(token, families.value)
 
