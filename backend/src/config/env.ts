@@ -22,5 +22,8 @@ export const env = {
     PORT: rawEnv.PORT,
     CORS: rawEnv.CORS_ORIGIN,
   },
+  SECURITY: {
+    SALT_ROUNDS: rawEnv.SALT_ROUNDS,
+  },
   NODE_ENV: rawEnv.NODE_ENV,
 };

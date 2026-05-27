@@ -7,7 +7,7 @@ import * as userRouter from './routes/user.route';
 import express from 'express';
 import { env } from './config/env';
 import cors from 'cors';
-import { globalLimiter } from './middlewares/rateLimit.middleware';
+// import { globalLimiter } from './middlewares/rateLimit.middleware';
 import { errorMiddleware } from './middlewares/error.middleware';
 import { notFoundMiddleware } from './middlewares/notFound.middleware';
 import swaggerUi from 'swagger-ui-express';
@@ -28,7 +28,7 @@ app.use(
 );
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(globalLimiter);
+// app.use(globalLimiter);
 
 app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
@@ -41,13 +41,19 @@ app.use('/api/users', userRouter.default);
 app.use(notFoundMiddleware);
 app.use(errorMiddleware);
 
+let server: ReturnType<typeof app.listen> | null = null;
+
 if (env.NODE_ENV !== 'test') {
   initDatabase()
     .then(() => {
       console.info('Database initialized successfully.');
-      app.listen(PORT, () => {
+      server = app.listen(PORT, () => {
         console.info(`Server is running on port ${PORT}`);
         console.info(`Swagger docs available at http://localhost:${PORT}/api/docs`);
+      });
+      server.on('error', (error: Error) => {
+        console.error('Server error:', error);
+        process.exit(1);
       });
     })
     .catch((error) => {

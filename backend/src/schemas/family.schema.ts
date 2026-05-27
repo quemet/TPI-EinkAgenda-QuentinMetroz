@@ -24,6 +24,7 @@ export const updateFamilySchemaBody = createFamilySchemaBody;
 
 export const deleteFamilySchemaParams = getFamilyByIdSchemaParams;
 
-export const removeUserFromFamilySchemaParams = getFamilyByIdSchemaParams;
-
-export const removeUserFromFamilySchemaBody = addUserToFamilySchemaBody;
+export const removeUserFromFamilySchemaParams = z.object({
+  familyId: z.string().uuid(),
+  userId: z.string().uuid(),
+});
