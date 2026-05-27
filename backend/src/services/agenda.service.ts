@@ -17,9 +17,9 @@ export const getAgendaById = async (id: string, familyId: string, userId: string
   return agenda;
 };
 
-export const createAgenda = async (name: string, familyId: string, userId: string) => {
+export const createAgenda = async (name: string, familyId: string, appertainTo: string, userId: string) => {
   await isUserCanAccessFamily(familyId, userId);
-  const agenda = await Agenda.create({ name, familyId });
+  const agenda = await Agenda.create({ name, familyId, appertainTo });
   return agenda;
 };
 

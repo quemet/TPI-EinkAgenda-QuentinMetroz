@@ -27,11 +27,11 @@ export const getAgendaById = async (req: ExtendedRequest, res: Response, next: N
 
 export const createAgenda = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
   const { familyId } = req.params as { familyId: string };
-  const { name } = req.body;
+  const { name, appertainTo } = req.body;
   const userId = req.user!.id;
 
   try {
-    const agenda = await agendaService.createAgenda(name, familyId, userId);
+    const agenda = await agendaService.createAgenda(name, familyId, appertainTo, userId);
     res.status(201).json(agenda);
   } catch (error) {
     next(error);

@@ -13,6 +13,7 @@ export const createAgendaSchemaParams = getAllAgendasSchemaParams;
 
 export const createAgendaSchemaBody = z.object({
   name: z.string().min(1).max(255),
+  appertainTo: z.string().uuid(),
 });
 
 export const updateAgendaSchemaParams = z.object({

@@ -21,7 +21,7 @@ describe('Agenda Integration tests', () => {
   };
 
   const createTestAgenda = async (familyId: string, userId: string, name: string) => {
-    const agenda = await createAgenda(name, familyId, userId);
+    const agenda = await createAgenda(name, familyId, userId, userId);
     return agenda;
   };
 
@@ -142,12 +142,13 @@ describe('Agenda Integration tests', () => {
       const response = await request(app)
         .post(`/api/agendas/${family.id}`)
         .set({ Authorization: token })
-        .send({ name: 'New Agenda' });
+        .send({ name: 'New Agenda', appertainTo: userId });
 
       expect(response.status).toBe(201);
       expect(response.body.id).toBeDefined();
       expect(response.body.name).toBe('New Agenda');
       expect(response.body.familyId).toBe(family.id);
+      expect(response.body.appertainTo).toBe(userId);
     });
 
     test('should return 404 if family not found', async () => {
@@ -196,7 +197,19 @@ describe('Agenda Integration tests', () => {
       const response = await request(app)
         .post(`/api/agendas/${family.id}`)
         .set({ Authorization: token })
-        .send({});
+        .send({ appertainTo: userId });
+
+      expect(response.status).toBe(422);
+    });
+
+    test('should return 422 if missing appertainTo', async () => {
+      const { token, userId } = await createUser('int-user-28', 'int-user-28@test.com');
+      const family = await createFamily(userId, 'Test Family 15');
+
+      const response = await request(app)
+        .post(`/api/agendas/${family.id}`)
+        .set({ Authorization: token })
+        .send({ name: 'New Agenda' });
 
       expect(response.status).toBe(422);
     });

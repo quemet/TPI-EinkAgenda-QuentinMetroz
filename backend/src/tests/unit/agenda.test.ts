@@ -29,7 +29,7 @@ describe('Agenda Unit tests', () => {
       test('should allow access to the agenda', async () => {
         const user = await createTestUser('unit-user-1', 'unit-user-1@test.com');
         const family = await createTestFamily(user.id, 'Test Family');
-        const agenda = await createAgenda('Test Agenda', family.id, user.id);
+        const agenda = await createAgenda('Test Agenda', family.id, user.id, user.id);
 
         const result = await getAllAgendas(family.id, user.id);
 
@@ -44,7 +44,7 @@ describe('Agenda Unit tests', () => {
         const user1 = await createTestUser('unit-user-2', 'unit-user-2@test.com');
         const user2 = await createTestUser('unit-user-3', 'unit-user-3@test.com');
         const family = await createTestFamily(user1.id, 'Test Family 2');
-        await createAgenda('Test Agenda 2', family.id, user1.id);
+        await createAgenda('Test Agenda 2', family.id, user1.id, user1.id);
 
         await expect(getAllAgendas(family.id, user2.id)).rejects.toThrow('Access denied');
       });
@@ -54,7 +54,7 @@ describe('Agenda Unit tests', () => {
       test('should allow access to the agenda', async () => {
         const user = await createTestUser('unit-user-4', 'unit-user-4@test.com');
         const family = await createTestFamily(user.id, 'Test Family 3');
-        const agenda = await createAgenda('Test Agenda 3', family.id, user.id);
+        const agenda = await createAgenda('Test Agenda 3', family.id, user.id, user.id);
 
         const retrieved = await getAgendaById(agenda.id, family.id, user.id);
 
@@ -68,8 +68,8 @@ describe('Agenda Unit tests', () => {
     test('should get all agendas for a family', async () => {
       const user = await createTestUser('unit-user-5', 'unit-user-5@test.com');
       const family = await createTestFamily(user.id, 'Test Family 4');
-      await createAgenda('Agenda 1', family.id, user.id);
-      await createAgenda('Agenda 2', family.id, user.id);
+      await createAgenda('Agenda 1', family.id, user.id, user.id);
+      await createAgenda('Agenda 2', family.id, user.id, user.id);
 
       const result = await getAllAgendas(family.id, user.id);
 
@@ -90,7 +90,7 @@ describe('Agenda Unit tests', () => {
     test('should get agenda by ID', async () => {
       const user = await createTestUser('unit-user-7', 'unit-user-7@test.com');
       const family = await createTestFamily(user.id, 'Test Family 6');
-      const agenda = await createAgenda('Test Agenda 4', family.id, user.id);
+      const agenda = await createAgenda('Test Agenda 4', family.id, user.id, user.id);
 
       const result = await getAgendaById(agenda.id, family.id, user.id);
 
@@ -110,7 +110,7 @@ describe('Agenda Unit tests', () => {
       const user1 = await createTestUser('unit-user-9', 'unit-user-9@test.com');
       const user2 = await createTestUser('unit-user-10', 'unit-user-10@test.com');
       const family = await createTestFamily(user1.id, 'Test Family 8');
-      const agenda = await createAgenda('Test Agenda 5', family.id, user1.id);
+      const agenda = await createAgenda('Test Agenda 5', family.id, user1.id, user1.id);
 
       await expect(getAgendaById(agenda.id, family.id, user2.id)).rejects.toThrow('Access denied');
     });
@@ -121,7 +121,7 @@ describe('Agenda Unit tests', () => {
       const user = await createTestUser('unit-user-11', 'unit-user-11@test.com');
       const family = await createTestFamily(user.id, 'Test Family 9');
 
-      const agenda = await createAgenda('New Agenda', family.id, user.id);
+      const agenda = await createAgenda('New Agenda', family.id, user.id, user.id);
 
       expect(agenda.id).toBeDefined();
       expect(agenda.name).toBe('New Agenda');
@@ -133,7 +133,7 @@ describe('Agenda Unit tests', () => {
     test('should update an existing agenda', async () => {
       const user = await createTestUser('unit-user-12', 'unit-user-12@test.com');
       const family = await createTestFamily(user.id, 'Test Family 10');
-      const agenda = await createAgenda('Old Name', family.id, user.id);
+      const agenda = await createAgenda('Old Name', family.id, user.id, user.id);
 
       const updated = await updateAgenda(agenda.id, 'New Name', user.id);
 
@@ -152,7 +152,7 @@ describe('Agenda Unit tests', () => {
       const user1 = await createTestUser('unit-user-14', 'unit-user-14@test.com');
       const user2 = await createTestUser('unit-user-15', 'unit-user-15@test.com');
       const family = await createTestFamily(user1.id, 'Test Family 11');
-      const agenda = await createAgenda('Test Agenda 6', family.id, user1.id);
+      const agenda = await createAgenda('Test Agenda 6', family.id, user1.id, user1.id);
 
       await expect(updateAgenda(agenda.id, 'New Name', user2.id)).rejects.toThrow('Access denied');
     });
@@ -162,7 +162,7 @@ describe('Agenda Unit tests', () => {
     test('should delete an existing agenda', async () => {
       const user = await createTestUser('unit-user-16', 'unit-user-16@test.com');
       const family = await createTestFamily(user.id, 'Test Family 12');
-      const agenda = await createAgenda('Test Agenda 7', family.id, user.id);
+      const agenda = await createAgenda('Test Agenda 7', family.id, user.id, user.id);
 
       await deleteAgenda(agenda.id, user.id);
 
@@ -181,7 +181,7 @@ describe('Agenda Unit tests', () => {
       const user1 = await createTestUser('unit-user-18', 'unit-user-18@test.com');
       const user2 = await createTestUser('unit-user-19', 'unit-user-19@test.com');
       const family = await createTestFamily(user1.id, 'Test Family 13');
-      const agenda = await createAgenda('Test Agenda 8', family.id, user1.id);
+      const agenda = await createAgenda('Test Agenda 8', family.id, user1.id, user1.id);
 
       await expect(deleteAgenda(agenda.id, user2.id)).rejects.toThrow('Access denied');
     });

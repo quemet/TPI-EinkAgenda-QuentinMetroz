@@ -14,6 +14,7 @@ export default class Agenda extends Model<
   declare id: CreationOptional<string>;
   declare name: string;
   declare familyId: string;
+  declare appertainTo: string;
 
   static initModel(sequelize: Sequelize) {
     Agenda.init(
@@ -28,6 +29,10 @@ export default class Agenda extends Model<
           allowNull: false,
         },
         familyId: {
+          type: DataTypes.UUID,
+          allowNull: false,
+        },
+        appertainTo: {
           type: DataTypes.UUID,
           allowNull: false,
         },
