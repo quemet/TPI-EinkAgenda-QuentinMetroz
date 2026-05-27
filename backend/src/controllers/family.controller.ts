@@ -43,20 +43,20 @@ export const createFamily = async (req: ExtendedRequest, res: Response, next: Ne
 
 export const addUserToFamily = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
   const { familyId } = req.params as { familyId: string };
-  const { userId } = req.body as { userId: string };
-  const requesterId = req.user!.id;
+  const { requesterUserId } = req.body as { requesterUserId: string };
+  const userId = req.user!.id;
 
   try {
     // ensure family exists first (returns 404 if not)
     await familyService.getFamilyById(familyId);
     // only admins of the family can add users
-    await isUserCanAccessFamily(familyId, requesterId);
+    await isUserCanAccessFamily(familyId, requesterUserId);
     const isAdmin = await Appertain.findOne({
-      where: { family_id: familyId, family_adminId: requesterId },
+      where: { family_id: familyId, family_adminId: requesterUserId },
     });
     if (!isAdmin) throw new AppError('Only admin can add user to family', 403);
 
-    if (userId === requesterId) throw new AppError('Cannot add yourself to family', 422);
+    if (userId === requesterUserId) throw new AppError('Cannot add yourself to family', 422);
     const targetIsAdmin = await Appertain.findOne({
       where: { family_id: familyId, family_adminId: userId },
     });
