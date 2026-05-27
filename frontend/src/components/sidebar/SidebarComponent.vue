@@ -3,9 +3,10 @@ import { useFamilyStore } from '@/stores/family.store'
 import { useRouter } from 'vue-router'
 
 const familyStore = useFamilyStore()
+
 const pageLinks = [
   { name: 'Home', path: '/' },
-  { name: 'Dashboard', path: '/dashboard/' + familyStore.getFamilyId() },
+  { name: 'Dashboard', path: `/dashboard/${familyStore.getFamilyId()}` },
 ]
 const router = useRouter()
 </script>

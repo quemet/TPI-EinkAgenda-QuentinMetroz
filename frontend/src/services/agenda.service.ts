@@ -1,13 +1,9 @@
-import axios from 'axios'
 import type { EventData } from '@/types/event.type'
+import httpClient from '@/services/httpclient'
 
 export const getAllFamilies = async () => {
-  const token = localStorage.getItem('token')
-  if (!token) return
   try {
-    const res = await axios.get('http://localhost:3000/api/families', {
-      headers: { Authorization: `Bearer ${token}` },
-    })
+    const res = await httpClient.get('/api/families', {})
     const data = res.data
     return data
   } catch (error) {
@@ -16,13 +12,9 @@ export const getAllFamilies = async () => {
   }
 }
 
-export const getEvents = async (token: string, agendaId: string) => {
+export const getEvents = async (agendaId: string) => {
   try {
-    const res = await axios.get(`http://localhost:3000/api/events/agenda/${agendaId}/events`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    })
+    const res = await httpClient.get(`/api/events/agenda/${agendaId}/events`)
     return res.data
   } catch (error) {
     if (error instanceof Error) {
@@ -35,24 +27,14 @@ export const getEvents = async (token: string, agendaId: string) => {
 }
 
 export const createEvent = async (dataEvent: Omit<EventData, 'id'>, agendaId: string) => {
-  const token = localStorage.getItem('token')
-  if (!token) return
   try {
-    const res = await axios.post(
-      `http://localhost:3000/api/events/agenda/${agendaId}/events`,
-      {
-        name: dataEvent.name,
-        description: dataEvent.description,
-        type: dataEvent.type,
-        startDatetime: dataEvent.startDatetime,
-        endDatetime: dataEvent.endDatetime,
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      },
-    )
+    const res = await httpClient.post(`/api/events/agenda/${agendaId}/events`, {
+      name: dataEvent.name,
+      description: dataEvent.description,
+      type: dataEvent.type,
+      startDatetime: dataEvent.startDatetime,
+      endDatetime: dataEvent.endDatetime,
+    })
     const data = res.data
     return data
   } catch (error) {
@@ -68,21 +50,13 @@ export const updateEvent = async (eventId: string, dataEvent: Partial<EventData>
   const token = localStorage.getItem('token')
   if (!token) return
   try {
-    const res = await axios.put(
-      `http://localhost:3000/api/events/${eventId}`,
-      {
-        name: dataEvent.name,
-        description: dataEvent.description,
-        type: dataEvent.type,
-        startDatetime: dataEvent.startDatetime,
-        endDatetime: dataEvent.endDatetime,
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      },
-    )
+    const res = await httpClient.put(`/api/events/${eventId}`, {
+      name: dataEvent.name,
+      description: dataEvent.description,
+      type: dataEvent.type,
+      startDatetime: dataEvent.startDatetime,
+      endDatetime: dataEvent.endDatetime,
+    })
     const data = res.data
     return data
   } catch (error) {

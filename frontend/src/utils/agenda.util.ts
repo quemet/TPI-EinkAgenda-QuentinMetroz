@@ -35,7 +35,7 @@ export const getAllDayInMonth = (month: number, year: number) => {
   if (!isFirstDayOfWeekMonday) {
     const dayNum = firstDayOfMonth.getDay()
     firstMonday = new Date(
-      new Date().setDate(firstDayOfMonth.getDate() - (dayNum === 0 ? 6 : dayNum - 1)),
+      new Date(firstDayOfMonth).setDate(firstDayOfMonth.getDate() - (dayNum === 0 ? 6 : dayNum - 1)),
     )
   } else {
     firstMonday = firstDayOfMonth
@@ -43,7 +43,7 @@ export const getAllDayInMonth = (month: number, year: number) => {
 
   if (!isLastDayOfWeekSunday) {
     const dayNum = lastDayOfMonth.getDay()
-    lastSunday = new Date(new Date().setDate(lastDayOfMonth.getDate() + (7 - dayNum)))
+    lastSunday = new Date(new Date(lastDayOfMonth).setDate(lastDayOfMonth.getDate() + (7 - dayNum)))
   } else {
     lastSunday = lastDayOfMonth
   }
@@ -57,7 +57,6 @@ export const getAllDayInMonth = (month: number, year: number) => {
   ) {
     allDays.push(new Date(date))
   }
-  allDays.push(new Date(lastSunday!))
 
   return allDays
 }

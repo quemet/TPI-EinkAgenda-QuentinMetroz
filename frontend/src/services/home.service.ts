@@ -1,12 +1,8 @@
-import axios from 'axios'
+import httpClient from './httpclient'
 
 export const getFamilies = async (token: string) => {
   try {
-    const res = await axios.get('http://localhost:3000/api/families', {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    })
+    const res = await httpClient.get('/api/families')
     return res.data
   } catch (error) {
     if (error instanceof Error) {
@@ -18,28 +14,23 @@ export const getFamilies = async (token: string) => {
 }
 
 export const getAllAgendas = async (token: string, families: { id: string; name: string }[]) => {
-  return await Promise.all(
+  const results = await Promise.all(
     families.map(async (fam) => {
       try {
-        const agendaRes = await axios.get(`http://localhost:3000/api/agendas/${fam.id}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        })
-        const agenda = agendaRes.data
-        return agenda
+        const agendaRes = await httpClient.get(`/api/agendas/${fam.id}`)
+        return agendaRes.data
       } catch {
         console.info(`No agendas found for family ${fam.name}`)
+        return null
       }
     }),
   )
+  return results.filter(Boolean)
 }
 
 export const getUserInfo = async (token: string) => {
   try {
-    const res = await axios.get('http://localhost:3000/api/users/me', {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    })
+    const res = await httpClient.get('/api/users/me')
     return res.data
   } catch (error) {
     if (error instanceof Error) {
@@ -52,15 +43,7 @@ export const getUserInfo = async (token: string) => {
 
 export const createFamily = async (familyName: string, token: string) => {
   try {
-    const res = await axios.post(
-      'http://localhost:3000/api/families',
-      { name: familyName },
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      },
-    )
+    const res = await httpClient.post('/api/families', { name: familyName })
     return res.data
   } catch (error) {
     if (error instanceof Error) {

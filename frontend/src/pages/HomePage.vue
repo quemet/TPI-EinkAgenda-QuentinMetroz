@@ -4,8 +4,11 @@ import HeaderComponent from '@/components/header/HeaderComponent.vue'
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { getUserInfo, getFamilies, getAllAgendas, createFamily } from '@/services/home.service'
+import { useAuthStore } from '@/stores/auth.store'
 
-const token = localStorage.getItem('token') || ''
+const authStore = useAuthStore()
+
+const token = authStore.getToken()
 const familyName = ref('')
 const router = useRouter()
 const dialogRef = ref<HTMLDialogElement | null>(null)
@@ -23,7 +26,10 @@ const date = ref(
 
 onMounted(async () => {
   try {
-    const token = localStorage.getItem('token')
+    if (!authStore.isUserAuthenticated()) {
+      router.push('/login')
+      return
+    }
 
     if (!token) {
       console.warn('No token found, skipping data fetch')
@@ -35,15 +41,16 @@ onMounted(async () => {
     families.value = await getFamilies(token)
 
     const apiAgendas = await getAllAgendas(token, families.value)
+    const allAgendas = apiAgendas[0]
 
-    apiAgendas.forEach((agenda: { id: string; name: string }) => {
+    allAgendas.forEach((agenda: { id: string; name: string }) => {
       agendas.value.push({ id: agenda.id, name: agenda.name })
     })
   } catch (error) {
     if (error instanceof Error) {
-      console.error('Error during login:', error.message)
+      console.error('Error during the data fetch:', error.message)
     } else {
-      console.error('Unknown error during login:', error)
+      console.error('Unknown error during the data fetch:', error)
     }
   }
 })
@@ -115,6 +122,7 @@ onMounted(async () => {
               class="bg-[#009CAA] text-white py-1.5 px-4 rounded hover:bg-[#007a88]"
               @click="
                 createFamily(familyName, token).then((data) => {
+                  console.log('Family created:', data)
                   families.push({ id: data.id, name: data.name })
                   dialogRef?.close()
                 })

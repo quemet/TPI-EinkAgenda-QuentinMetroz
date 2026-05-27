@@ -1,13 +1,8 @@
-import axios from 'axios'
+import httpClient from './httpclient'
 
 const getAllFamilyAgenda = async (token: string, familyId: string) => {
   try {
-    const response = await axios.get(`http://localhost:3000/api/agendas/${familyId}`, {
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-    })
+    const response = await httpClient.get(`/api/agendas/${familyId}`)
     const data = response.data
     return data
   } catch (error) {
@@ -18,12 +13,7 @@ const getAllFamilyAgenda = async (token: string, familyId: string) => {
 
 const getAllFamilyUsers = async (token: string, familyId: string) => {
   try {
-    const response = await axios.get(`http://localhost:3000/api/users/family/${familyId}/users`, {
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-    })
+    const response = await httpClient.get(`/api/users/family/${familyId}/users`)
     const data = response.data
     return data
   } catch (error) {
@@ -34,18 +24,9 @@ const getAllFamilyUsers = async (token: string, familyId: string) => {
 
 const createAgenda = async (token: string, familyId: string, agendaName: string) => {
   try {
-    const response = await axios.post(
-      `http://localhost:3000/api/agendas/${familyId}`,
-      {
-        name: agendaName,
-      },
-      {
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-      },
-    )
+    const response = await httpClient.post(`/api/agendas/${familyId}`, {
+      name: agendaName,
+    })
     const data = response.data
     return data
   } catch (error) {
@@ -55,16 +36,9 @@ const createAgenda = async (token: string, familyId: string, agendaName: string)
 
 const modifyAgendaName = async (token: string, agendaId: string, newName: string) => {
   try {
-    const res = await axios.put(
-      `http://localhost:3000/api/agendas/${agendaId}`,
-      { name: newName },
-      {
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-      },
-    )
+    const res = await httpClient.put(`/api/agendas/${agendaId}`, {
+      name: newName,
+    })
     const data = res.data
     return data
   } catch (error) {
@@ -74,44 +48,36 @@ const modifyAgendaName = async (token: string, agendaId: string, newName: string
 
 const deleteAgenda = async (token: string, agendaId: string) => {
   try {
-    await axios.delete(`http://localhost:3000/api/agendas/${agendaId}`, {
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-    })
+    await httpClient.delete(`/api/agendas/${agendaId}`)
   } catch (error) {
     console.error('Error deleting agenda:', error)
   }
 }
 
-const removeUserFromFamily = async (token: string, userId: string, familyId: string) => {
+const removeUserFromFamily = async (userId: string, familyId: string) => {
   try {
-    await axios.delete(`http://localhost:3000/api/families/${familyId}/users/${userId}`, {
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-    })
+    await httpClient.delete(`/api/families/${familyId}/users/${userId}`)
   } catch (error) {
     console.error('Error removing user from family:', error)
   }
 }
 
-const changeUserRole = async (token: string, userId: string, familyId: string) => {
+const changeUserRole = async (userId: string, familyId: string) => {
   try {
-    await axios.post(
-      `http://localhost:3000/api/families/${familyId}/admins`,
-      { userId: userId },
-      {
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-      },
-    )
+    await httpClient.post(`/api/families/${familyId}/admins`, { userId: userId })
   } catch (error) {
     console.error('Error changing user role:', error)
+  }
+}
+
+const getMe = async (token: string) => {
+  try {
+    const response = await httpClient.get(`/api/users/me`)
+    const data = response.data
+    return data
+  } catch (error) {
+    console.error('Error fetching current user:', error)
+    return null
   }
 }
 
@@ -123,4 +89,5 @@ export {
   deleteAgenda,
   removeUserFromFamily,
   changeUserRole,
+  getMe,
 }

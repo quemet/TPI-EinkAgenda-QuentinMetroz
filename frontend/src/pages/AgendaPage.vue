@@ -4,6 +4,8 @@ import { ref, onMounted, onBeforeUnmount, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import type { EventData } from '@/types/event.type'
 import { useFamilyStore } from '@/stores/family.store'
+import { useAuthStore } from '@/stores/auth.store'
+import { useUserStore } from '@/stores/user.store'
 import {
   increaseMonth,
   decreaseMonth,
@@ -18,7 +20,10 @@ const props = defineProps({
   agendaId: String,
 })
 
-const token = localStorage.getItem('token') as string
+const authStore = useAuthStore()
+const userStore = useUserStore()
+
+const token = authStore.getToken()
 
 const events = ref<EventData[]>([])
 const month = ref(new Date().getMonth())
@@ -69,12 +74,22 @@ const selectFamily = (id: string) => {
   router.push(`/dashboard/${id}`)
 }
 
+const formatDateTime = (datetime: string) => {
+  const date = new Date(datetime)
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  const hours = String(date.getHours()).padStart(2, '0')
+  const minutes = String(date.getMinutes()).padStart(2, '0')
+  return `${year}-${month}-${day}T${hours}:${minutes}`
+}
+
 const fillUpdatedVariable = (event: EventData) => {
   updatedEventName.value = event.name
   updatedEventDescription.value = event.description
   updatedEventType.value = event.type
-  updatedEventStartDatetime.value = event.startDatetime.substring(0, event.startDatetime.length - 5)
-  updatedEventEndDatetime.value = event.endDatetime.substring(0, event.endDatetime.length - 5)
+  updatedEventStartDatetime.value = formatDateTime(event.startDatetime)
+  updatedEventEndDatetime.value = formatDateTime(event.endDatetime)
 }
 
 const handleClickOutside = (event: MouseEvent) => {
@@ -85,13 +100,20 @@ const handleClickOutside = (event: MouseEvent) => {
 
 const logout = () => {
   localStorage.removeItem('token')
+  authStore.setToken('')
+  userStore.setUser({ id: '', username: '', email: '', role: '', personType: '' })
   familyStore.setFamilyId(null)
   isOpen.value = false
-  router.push('/')
+  router.push('/login')
 }
 
 onMounted(async () => {
   try {
+    if (!authStore.isUserAuthenticated()) {
+      router.push('/login')
+      return
+    }
+
     events.value = await getEvents(token, props.agendaId!)
     const fms = await getAllFamilies()
     families.value = fms
@@ -102,7 +124,7 @@ onMounted(async () => {
     document.addEventListener('mousedown', handleClickOutside)
   } catch (error) {
     console.error('Error in onMounted:', error)
-    router.push('/home')
+    router.push('/login')
   } finally {
     console.info('Finished fetching events')
   }
@@ -221,10 +243,10 @@ onBeforeUnmount(() => {
               >
                 <span class="text-sm font-semibold">{{ daysShort[(i - 1) * 7 + j - 1] }}</span>
                 <span class="text-xs text-gray-500">{{
-                  allDays[(i - 1) * 7 + j - 1].getDate()
+                  allDays[(i - 1) * 7 + j - 1]?.getDate()
                 }}</span>
                 <span
-                  v-for="event in getEventsForDay(events, allDays[(i - 1) * 7 + j - 1])"
+                  v-for="event in getEventsForDay(events, allDays[(i - 1) * 7 + j - 1] as Date)"
                   :key="event.id"
                   class="text-xs text-gray-700 bg-gray-200 rounded px-1 cursor-pointer"
                   @click="

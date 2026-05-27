@@ -19,12 +19,19 @@ export const askUserConfirmation = () => {
   return confirm('Êtes-vous sûr de vouloir enlever cet utilisateur de la famille ?')
 }
 
-export const copyLink = async (linkCopied: { value: boolean }, familyId: string) => {
-  await navigator.clipboard.writeText(createAddMemberLink(familyId))
+export const copyLink = async (
+  linkCopied: { value: boolean },
+  familyId: string,
+  userId: string,
+) => {
+  await navigator.clipboard.writeText(createAddMemberLink(familyId, userId))
   linkCopied.value = true
   setTimeout(() => (linkCopied.value = false), 2000)
 }
 
-export const createAddMemberLink = (familyId: string) => {
-  return `http://localhost:5173/login?familyId=${familyId}`
+export const createAddMemberLink = (familyId: string, userId: string) => {
+  if (familyId === '' || userId === '') {
+    throw new Error('Family ID and User ID must not be empty')
+  }
+  return `http://localhost:5173/login/${familyId}/${userId}`
 }

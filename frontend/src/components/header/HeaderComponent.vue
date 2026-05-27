@@ -1,8 +1,10 @@
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount } from 'vue'
+import { ref, watch, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
 import { useFamilyStore } from '@/stores/family.store'
 import fetchFamilies from './header.service'
+import { useAuthStore } from '@/stores/auth.store'
+import { useUserStore } from '@/stores/user.store'
 
 const props = defineProps<{
   families?: { id: string; name: string }[]
@@ -10,8 +12,19 @@ const props = defineProps<{
 
 const router = useRouter()
 const familyStore = useFamilyStore()
+const authStore = useAuthStore()
+const userStore = useUserStore()
 
 const fams = ref<{ id: string; name: string }[]>(props.families ?? [])
+
+watch(
+  () => props.families,
+  (newFamilies) => {
+    if (newFamilies) fams.value = newFamilies
+  },
+  { deep: true },
+)
+
 const isOpen = ref(false)
 const dropdownRef = ref<HTMLElement | null>(null)
 
@@ -31,18 +44,25 @@ const selectFamily = (id: string) => {
 
 const logout = () => {
   localStorage.removeItem('token')
+  authStore.setToken('')
+  userStore.setUser({ id: '', username: '', email: '', role: '', personType: '' })
   familyStore.setFamilyId(null)
   isOpen.value = false
   router.push('/')
 }
 
 onMounted(async () => {
-  const fams = await fetchFamilies(token as string)
-  const first = fams[0]
-  if (!familyStore.familyId && first) {
-    familyStore.setFamilyId(first.id)
+  try {
+    const fetched = await fetchFamilies(token as string)
+    fams.value = fetched
+    const first = fetched[0]
+    if (!familyStore.familyId && first) {
+      familyStore.setFamilyId(first.id)
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+  } catch (error) {
+    console.error('Error fetching families:', error)
   }
-  document.addEventListener('mousedown', handleClickOutside)
 })
 
 onBeforeUnmount(() => {

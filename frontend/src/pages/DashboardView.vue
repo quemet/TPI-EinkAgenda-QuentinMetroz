@@ -3,6 +3,7 @@ import HeaderComponent from '@/components/header/HeaderComponent.vue'
 import SidebarComponent from '@/components/sidebar/SidebarComponent.vue'
 import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { useAuthStore } from '@/stores/auth.store'
 
 import {
   createAgenda,
@@ -12,6 +13,7 @@ import {
   modifyAgendaName,
   removeUserFromFamily,
   changeUserRole,
+  getMe,
 } from '@/services/dashboard.service'
 
 import {
@@ -23,6 +25,7 @@ import {
 } from '@/utils/dashboard.util'
 
 const router = useRouter()
+const authStore = useAuthStore()
 
 const props = defineProps({
   familyId: {
@@ -31,11 +34,18 @@ const props = defineProps({
   },
 })
 
-const token = localStorage.getItem('token') as string
+const token = authStore.getToken()
 const agendas = ref<{ id: string; name: string }[]>([])
 const familyUsers = ref<
   { id: string; username: string; email: string; role: string; personType: 'young' | 'elder' }[]
 >([])
+const me = ref<{
+  id: string
+  username: string
+  email: string
+  role: string
+  personType: 'young' | 'elder'
+} | null>(null)
 
 const dialogRef = ref<HTMLDialogElement | null>(null)
 const addMemberDialogRef = ref<HTMLDialogElement | null>(null)
@@ -44,8 +54,13 @@ const agendaProprietary = ref('')
 const linkCopied = ref(false)
 
 onMounted(async () => {
+  if (!authStore.isUserAuthenticated()) {
+    router.push('/login')
+    return
+  }
   agendas.value = await getAllFamilyAgenda(token, props.familyId)
   familyUsers.value = await getAllFamilyUsers(token, props.familyId)
+  me.value = await getMe(token)
 })
 </script>
 
@@ -367,7 +382,7 @@ onMounted(async () => {
       </p>
       <div class="flex items-center gap-2 border border-gray-300 rounded-lg px-3 py-2 bg-gray-50">
         <span class="text-sm text-gray-700 flex-1 truncate">{{
-          createAddMemberLink(props.familyId)
+          me ? createAddMemberLink(props.familyId, me.id) : ''
         }}</span>
       </div>
       <div class="flex justify-end gap-2">
@@ -381,7 +396,7 @@ onMounted(async () => {
         <button
           type="button"
           class="bg-[#009CAA] text-white py-1.5 px-4 rounded hover:bg-[#007a88]"
-          @click="copyLink({ value: linkCopied }, props.familyId)"
+          @click="me && copyLink({ value: linkCopied }, props.familyId, me.id)"
         >
           {{ linkCopied ? 'Copié !' : 'Copier le lien' }}
         </button>

@@ -20,6 +20,18 @@ const router = createRouter({
       props: true,
       component: () => import('../pages/DashboardView.vue'),
     },
+    {
+      path: '/login/:familyId?/:requesterId?',
+      name: 'login',
+      props: true,
+      component: () => import('../pages/LoginPage.vue'),
+    },
+    {
+      path: '/signup/:familyId?/:requesterId?',
+      name: 'signup',
+      props: true,
+      component: () => import('../pages/SignupPage.vue'),
+    },
   ],
 })
 
