@@ -25,8 +25,9 @@ try:
     while True:
         if user_agenda:
             events : list[Event] = client.fetch_all_events(api_base_url, client.token, user_agenda.id)
+            isMidnight = datetime.datetime.now().hour == 0 and datetime.datetime.now().minute <= time_between_requests
 
-            if events != last_request_events:
+            if events != last_request_events or isMidnight:
                 today = datetime.datetime.now()
                 today_str = today.strftime("%Y-%m-%d")
                 weekday = datetime.datetime.weekday(today)
