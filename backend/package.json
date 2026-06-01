@@ -7,7 +7,7 @@
     "dev": "nodemon --watch src --ext ts --exec \"npx tsx src/server.ts\"",
     "build": "tsc",
     "start": "node dist/server.js",
-    "test": "jest --runInBand --detectOpenHandles",
+    "test": "jest --runInBand --detectOpenHandles --verbose",
     "test:coverage": "jest --coverage --runInBand --detectOpenHandles"
   },
   "keywords": [],

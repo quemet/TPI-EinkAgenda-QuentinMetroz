@@ -1,0 +1,22 @@
+[
+  {
+    "name": "Médecin",
+    "file": "medecin.png",
+    "color": "red"
+  },
+  {
+    "name": "Visite",
+    "file": "visite.png",
+    "color": "yellow"
+  },
+  {
+    "name": "Course",
+    "file": "caddie.png",
+    "color": "green"
+  },
+  {
+    "name": "Médicament",
+    "file": "medicament.png",
+    "color": "blue"
+  }
+]

@@ -354,7 +354,7 @@ onMounted(async () => {
               type="button"
               class="bg-[#009CAA] text-white py-1.5 px-4 rounded hover:bg-[#007a88]"
               @click="
-                createAgenda(token, props.familyId, agendaName).then((data) => {
+                createAgenda(token, props.familyId, agendaName, agendaProprietary).then((data) => {
                   if (data) {
                     agendas.push({ id: data.id, name: data.name })
                     dialogRef?.close()

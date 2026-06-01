@@ -27,13 +27,13 @@ const createTestUser = async () => {
 const createTestAgenda = async (userId: string) => {
   const family = await Family.create({ name: 'Test Family' });
   await Belong.create({ user_id: userId, family_id: family.id });
-  const agenda = await Agenda.create({ name: 'Test Agenda', familyId: family.id });
+  const agenda = await Agenda.create({ name: 'Test Agenda', familyId: family.id, appertainTo: userId });
   return agenda.id;
 };
 
 const createTestAgendaWithoutUserAccess = async () => {
   const family = await Family.create({ name: 'Test Family 2' });
-  const agenda = await Agenda.create({ name: 'Test Agenda 2', familyId: family.id });
+  const agenda = await Agenda.create({ name: 'Test Agenda 2', familyId: family.id, appertainTo: '00000000-0000-0000-0000-000000000000' });
   return agenda.id;
 };
 

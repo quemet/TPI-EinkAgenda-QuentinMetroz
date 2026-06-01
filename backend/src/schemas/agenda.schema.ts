@@ -20,6 +20,8 @@ export const updateAgendaSchemaParams = z.object({
   id: z.string().uuid(),
 });
 
-export const updateAgendaSchemaBody = createAgendaSchemaBody;
+export const updateAgendaSchemaBody = z.object({
+  name: z.string().min(1).max(255),
+});
 
 export const deleteAgendaSchemaParams = updateAgendaSchemaParams;

@@ -22,10 +22,11 @@ const getAllFamilyUsers = async (token: string, familyId: string) => {
   }
 }
 
-const createAgenda = async (token: string, familyId: string, agendaName: string) => {
+const createAgenda = async (token: string, familyId: string, agendaName: string, appertainTo: string) => {
   try {
     const response = await httpClient.post(`/api/agendas/${familyId}`, {
       name: agendaName,
+      appertainTo,
     })
     const data = response.data
     return data

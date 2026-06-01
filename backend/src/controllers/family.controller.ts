@@ -43,25 +43,25 @@ export const createFamily = async (req: ExtendedRequest, res: Response, next: Ne
 
 export const addUserToFamily = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
   const { familyId } = req.params as { familyId: string };
-  const { requesterUserId } = req.body as { requesterUserId: string };
-  const userId = req.user!.id;
+  const { userId: targetUserId } = req.body as { userId: string };
+  const requesterId = req.user!.id;
 
   try {
     // ensure family exists first (returns 404 if not)
     await familyService.getFamilyById(familyId);
     // only admins of the family can add users
-    await isUserCanAccessFamily(familyId, requesterUserId);
+    await isUserCanAccessFamily(familyId, requesterId);
     const isAdmin = await Appertain.findOne({
-      where: { family_id: familyId, family_adminId: requesterUserId },
+      where: { family_id: familyId, family_adminId: requesterId },
     });
     if (!isAdmin) throw new AppError('Only admin can add user to family', 403);
 
-    if (userId === requesterUserId) throw new AppError('Cannot add yourself to family', 422);
+    if (targetUserId === requesterId) throw new AppError('Cannot add yourself to family', 422);
     const targetIsAdmin = await Appertain.findOne({
-      where: { family_id: familyId, family_adminId: userId },
+      where: { family_id: familyId, family_adminId: targetUserId },
     });
     if (targetIsAdmin) throw new AppError('User is already admin', 422);
-    await familyService.addUserToFamily(familyId, userId);
+    await familyService.addUserToFamily(familyId, targetUserId);
     res.status(201).send();
   } catch (error) {
     next(error);
@@ -113,7 +113,8 @@ export const removeUserFromFamily = async (
   res: Response,
   next: NextFunction,
 ) => {
-  const { familyId, targetUserId } = req.params as { familyId: string; targetUserId: string };
+  const { familyId } = req.params as { familyId: string };
+  const { userId: targetUserId } = req.body as { userId: string };
   const userId = req.user!.id;
 
   try {

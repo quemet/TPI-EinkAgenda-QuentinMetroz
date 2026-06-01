@@ -39,8 +39,20 @@ const mockAgendas = [
   { id: 'agenda-2', name: 'Agenda Two' },
 ]
 const mockUsers = [
-  { id: 'user-1', username: 'Alice', email: 'alice@test.com', role: 'admin', personType: 'elder' as const },
-  { id: 'user-2', username: 'Bob', email: 'bob@test.com', role: 'user', personType: 'young' as const },
+  {
+    id: 'user-1',
+    username: 'Alice',
+    email: 'alice@test.com',
+    role: 'admin',
+    personType: 'elder' as const,
+  },
+  {
+    id: 'user-2',
+    username: 'Bob',
+    email: 'bob@test.com',
+    role: 'user',
+    personType: 'young' as const,
+  },
 ]
 
 function setupAuthMocks() {
@@ -48,7 +60,8 @@ function setupAuthMocks() {
     if (url === '/api/users/me') return Promise.resolve({ data: mockMe })
     if (url === `/api/agendas/${FAMILY_ID}`) return Promise.resolve({ data: mockAgendas })
     if (url === `/api/users/family/${FAMILY_ID}/users`) return Promise.resolve({ data: mockUsers })
-    if (url === '/api/families') return Promise.resolve({ data: [{ id: FAMILY_ID, name: 'Family One' }] })
+    if (url === '/api/families')
+      return Promise.resolve({ data: [{ id: FAMILY_ID, name: 'Family One' }] })
     return Promise.resolve({ data: [] })
   })
 }
@@ -159,12 +172,16 @@ describe('DashboardView Integration Tests', () => {
     vi.mocked(httpClient.get).mockImplementation((url: string) => {
       if (url === '/api/users/me') return Promise.resolve({ data: mockMe })
       if (url === `/api/agendas/${FAMILY_ID}`) return Promise.resolve({ data: [mockAgendas[0]] })
-      if (url === `/api/users/family/${FAMILY_ID}/users`) return Promise.resolve({ data: mockUsers })
-      if (url === '/api/families') return Promise.resolve({ data: [{ id: FAMILY_ID, name: 'Family One' }] })
+      if (url === `/api/users/family/${FAMILY_ID}/users`)
+        return Promise.resolve({ data: mockUsers })
+      if (url === '/api/families')
+        return Promise.resolve({ data: [{ id: FAMILY_ID, name: 'Family One' }] })
       return Promise.resolve({ data: [] })
     })
     const mockPrompt = vi.spyOn(window, 'prompt').mockReturnValue('Updated Agenda')
-    vi.mocked(httpClient.put).mockResolvedValue({ data: { id: 'agenda-1', name: 'Updated Agenda' } })
+    vi.mocked(httpClient.put).mockResolvedValue({
+      data: { id: 'agenda-1', name: 'Updated Agenda' },
+    })
 
     const wrapper = mount(DashboardView, {
       props: { familyId: FAMILY_ID },
@@ -175,10 +192,9 @@ describe('DashboardView Integration Tests', () => {
     await wrapper.find('.hover\\:text-gray-700').trigger('click')
     await flushPromises()
 
-    expect(httpClient.put).toHaveBeenCalledWith(
-      expect.stringContaining('/api/agendas/'),
-      { name: 'Updated Agenda' },
-    )
+    expect(httpClient.put).toHaveBeenCalledWith(expect.stringContaining('/api/agendas/'), {
+      name: 'Updated Agenda',
+    })
     expect(wrapper.text()).toContain('Updated Agenda')
     mockPrompt.mockRestore()
   })
@@ -187,7 +203,7 @@ describe('DashboardView Integration Tests', () => {
     localStorage.setItem('token', 'test-token')
     setupAuthMocks()
     vi.mocked(httpClient.post).mockResolvedValue({
-      data: { id: 'agenda-new', name: 'New Agenda' },
+      data: { id: 'agenda-new', name: 'New Agenda', appertainTo: FAMILY_ID },
     })
 
     const wrapper = mount(DashboardView, {
@@ -197,10 +213,17 @@ describe('DashboardView Integration Tests', () => {
     await flushPromises()
 
     await wrapper.find('input[name="agendaName"]').setValue('New Agenda')
-    await wrapper.findAll('button').find((b) => b.text() === 'Créer')?.trigger('click')
+    await wrapper.find('select[name="agendaProprietary"]').setValue('user-1')
+    await wrapper
+      .findAll('button')
+      .find((b) => b.text() === 'Créer')
+      ?.trigger('click')
     await flushPromises()
 
-    expect(httpClient.post).toHaveBeenCalledWith(`/api/agendas/${FAMILY_ID}`, { name: 'New Agenda' })
+    expect(httpClient.post).toHaveBeenCalledWith(`/api/agendas/${FAMILY_ID}`, {
+      name: 'New Agenda',
+      appertainTo: 'user-1',
+    })
     expect(wrapper.text()).toContain('New Agenda')
   })
 
@@ -214,10 +237,16 @@ describe('DashboardView Integration Tests', () => {
     })
     await flushPromises()
 
-    await wrapper.findAll('button').find((b) => b.text() === 'Annuler')?.trigger('click')
+    await wrapper
+      .findAll('button')
+      .find((b) => b.text() === 'Annuler')
+      ?.trigger('click')
     await flushPromises()
 
-    expect(httpClient.post).not.toHaveBeenCalledWith(`/api/agendas/${FAMILY_ID}`, expect.any(Object))
+    expect(httpClient.post).not.toHaveBeenCalledWith(
+      `/api/agendas/${FAMILY_ID}`,
+      expect.any(Object),
+    )
   })
 
   it('shows the invite link in the add member dialog', async () => {
