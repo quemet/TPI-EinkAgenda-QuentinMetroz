@@ -23,7 +23,7 @@ COPY package.json package-lock.json ./
 RUN npm ci --only=production && npm cache clean --force
 
 COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/src/swagger.yaml ./src/swagger.yaml
+COPY --from=builder /app/src/swagger.yaml ./dist/swagger.yaml
 
 RUN chown -R nodejs:nodejs /app
 

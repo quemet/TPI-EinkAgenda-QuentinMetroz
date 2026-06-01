@@ -1,6 +1,10 @@
 <script setup lang="ts">
 import SidebarComponent from '@/components/sidebar/SidebarComponent.vue'
 import { ref, onMounted, onBeforeUnmount, computed } from 'vue'
+import caddieIcon from '@/assets/caddie.png'
+import medecinIcon from '@/assets/medecin.png'
+import medicamentIcon from '@/assets/medicament.png'
+import visiteIcon from '@/assets/visite.png'
 import { useRouter } from 'vue-router'
 import type { EventData } from '@/types/event.type'
 import { useFamilyStore } from '@/stores/family.store'
@@ -53,17 +57,26 @@ const dialogRef = ref<HTMLDialogElement | null>(null)
 const dialogUpdateRef = ref<HTMLDialogElement | null>(null)
 const updatedEventId = ref('')
 
+const eventTypes = [
+  { name: 'Médecin', icon: medecinIcon },
+  { name: 'Visite', icon: visiteIcon },
+  { name: 'Course', icon: caddieIcon },
+  { name: 'Médicament', icon: medicamentIcon },
+]
+
 const eventName = ref('')
 const eventDescription = ref('')
 const eventType = ref('')
 const eventStartDatetime = ref('')
 const eventEndDatetime = ref('')
+const eventTypeOpen = ref(false)
 
 const updatedEventName = ref('')
 const updatedEventDescription = ref('')
 const updatedEventType = ref('')
 const updatedEventStartDatetime = ref('')
 const updatedEventEndDatetime = ref('')
+const updatedEventTypeOpen = ref(false)
 
 const families = ref<{ id: string; name: string }[]>([])
 const allDays = computed(() => getAllDayInMonth(month.value, year.value))
@@ -114,7 +127,7 @@ onMounted(async () => {
       return
     }
 
-    events.value = await getEvents(token, props.agendaId!)
+    events.value = await getEvents(props.agendaId!)
     const fms = await getAllFamilies()
     families.value = fms
     const first = families.value[0]
@@ -305,17 +318,43 @@ onBeforeUnmount(() => {
             />
           </div>
 
-          <div>
-            <label for="event-type" class="block text-sm font-medium text-gray-700 mb-1">
-              Type d'événement
-            </label>
-            <input
-              v-model="eventType"
-              type="text"
-              id="event-type"
-              name="event-type"
-              class="w-full border border-gray-300 rounded px-3 py-2 mb-4 focus:outline-none focus:ring-2 focus:ring-[#009CAA]"
-            />
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-1">Type d'événement</label>
+            <div class="relative">
+              <button
+                type="button"
+                class="w-full border border-gray-300 rounded px-3 py-2 flex items-center gap-3 bg-white focus:outline-none focus:ring-2 focus:ring-[#009CAA] text-left"
+                @click="eventTypeOpen = !eventTypeOpen"
+              >
+                <img
+                  v-if="eventType"
+                  :src="eventTypes.find((t) => t.name === eventType)?.icon"
+                  class="w-6 h-6 object-contain"
+                />
+                <span :class="eventType ? '' : 'text-gray-400'">{{
+                  eventType || 'Sélectionnez un type'
+                }}</span>
+                <svg class="ml-auto w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              <div
+                v-if="eventTypeOpen"
+                class="absolute z-50 w-full bg-white border border-gray-300 rounded mt-1 shadow-lg"
+              >
+                <button
+                  v-for="type in eventTypes"
+                  :key="type.name"
+                  type="button"
+                  class="w-full flex items-center gap-3 px-3 py-2 hover:bg-gray-100 text-left"
+                  :class="eventType === type.name ? 'bg-[#e6f7f9]' : ''"
+                  @click="eventType = type.name; eventTypeOpen = false"
+                >
+                  <img :src="type.icon" class="w-6 h-6 object-contain" />
+                  <span>{{ type.name }}</span>
+                </button>
+              </div>
+            </div>
           </div>
 
           <div>
@@ -427,17 +466,43 @@ onBeforeUnmount(() => {
             />
           </div>
 
-          <div>
-            <label for="event-type" class="block text-sm font-medium text-gray-700 mb-1">
-              Type d'événement
-            </label>
-            <input
-              v-model="updatedEventType"
-              type="text"
-              id="event-type"
-              name="event-type"
-              class="w-full border border-gray-300 rounded px-3 py-2 mb-4 focus:outline-none focus:ring-2 focus:ring-[#009CAA]"
-            />
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-1">Type d'événement</label>
+            <div class="relative">
+              <button
+                type="button"
+                class="w-full border border-gray-300 rounded px-3 py-2 flex items-center gap-3 bg-white focus:outline-none focus:ring-2 focus:ring-[#009CAA] text-left"
+                @click="updatedEventTypeOpen = !updatedEventTypeOpen"
+              >
+                <img
+                  v-if="updatedEventType"
+                  :src="eventTypes.find((t) => t.name === updatedEventType)?.icon"
+                  class="w-6 h-6 object-contain"
+                />
+                <span :class="updatedEventType ? '' : 'text-gray-400'">{{
+                  updatedEventType || 'Sélectionnez un type'
+                }}</span>
+                <svg class="ml-auto w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              <div
+                v-if="updatedEventTypeOpen"
+                class="absolute z-50 w-full bg-white border border-gray-300 rounded mt-1 shadow-lg"
+              >
+                <button
+                  v-for="type in eventTypes"
+                  :key="type.name"
+                  type="button"
+                  class="w-full flex items-center gap-3 px-3 py-2 hover:bg-gray-100 text-left"
+                  :class="updatedEventType === type.name ? 'bg-[#e6f7f9]' : ''"
+                  @click="updatedEventType = type.name; updatedEventTypeOpen = false"
+                >
+                  <img :src="type.icon" class="w-6 h-6 object-contain" />
+                  <span>{{ type.name }}</span>
+                </button>
+              </div>
+            </div>
           </div>
 
           <div>

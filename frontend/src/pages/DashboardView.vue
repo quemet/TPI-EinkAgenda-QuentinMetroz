@@ -225,7 +225,7 @@ onMounted(async () => {
                     (e) => {
                       const isChangedToAdmin = askConfirmationForTheChangmentOfRole(user.role)
                       if (isChangedToAdmin) {
-                        changeUserRole(token, user.id, props.familyId).then(() => {
+                        changeUserRole(user.id, props.familyId).then(() => {
                           const index = familyUsers.findIndex((u) => u.id === user.id)
                           if (index !== -1) {
                             familyUsers[index]!.role = 'admin'
@@ -258,7 +258,7 @@ onMounted(async () => {
                     (e) => {
                       const isConfirmed = askUserConfirmation()
                       if (isConfirmed) {
-                        removeUserFromFamily(token, user.id, props.familyId)
+                        removeUserFromFamily(user.id, props.familyId)
                       }
                       e.stopPropagation()
                     }
