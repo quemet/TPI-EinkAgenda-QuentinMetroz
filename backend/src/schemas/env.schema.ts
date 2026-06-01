@@ -1,0 +1,18 @@
+import z from 'zod';
+
+const envSchema = z.object({
+  DB_HOST: z.string(),
+  DB_PORT: z.string(),
+  DB_USER: z.string(),
+  DB_PASSWORD: z.string(),
+  DB_NAME: z.string(),
+  DB_SYNC_MODE: z.enum(['force', 'alter', 'none']),
+  JWT_SECRET: z.string().min(32, 'JWT_SECRET must be at least 32 characters long'),
+  JWT_EXPIRES_IN: z.string(),
+  PORT: z.string(),
+  CORS_ORIGIN: z.string().url(),
+  NODE_ENV: z.enum(['development', 'production', 'test']),
+  SALT_ROUNDS: z.coerce.number().int().positive(),
+});
+
+export default envSchema;
