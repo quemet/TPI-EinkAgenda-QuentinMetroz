@@ -26,5 +26,8 @@ export const deleteFamilySchemaParams = getFamilyByIdSchemaParams;
 
 export const removeUserFromFamilySchemaParams = z.object({
   familyId: z.string().uuid(),
+});
+
+export const removeUserFromFamilySchemaBody = z.object({
   userId: z.string().uuid(),
 });

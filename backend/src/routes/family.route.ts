@@ -13,6 +13,7 @@ import {
   updateFamilySchemaBody,
   deleteFamilySchemaParams,
   removeUserFromFamilySchemaParams,
+  removeUserFromFamilySchemaBody,
 } from '../schemas/family.schema';
 
 const router = Router();
@@ -68,6 +69,7 @@ router.delete(
   '/:familyId/users',
   authMiddleware,
   validate(removeUserFromFamilySchemaParams, 'params'),
+  validate(removeUserFromFamilySchemaBody, 'body'),
   familyController.removeUserFromFamily,
 );
 

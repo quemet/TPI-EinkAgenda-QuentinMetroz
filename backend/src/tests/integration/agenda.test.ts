@@ -152,13 +152,13 @@ describe('Agenda Integration tests', () => {
     });
 
     test('should return 404 if family not found', async () => {
-      const { token } = await createUser('int-user-12', 'int-user-12@test.com');
+      const { token, userId } = await createUser('int-user-12', 'int-user-12@test.com');
       const fakeId = '550e8400-e29b-41d4-a716-446655440000';
 
       const response = await request(app)
         .post(`/api/agendas/${fakeId}`)
         .set({ Authorization: token })
-        .send({ name: 'New Agenda' });
+        .send({ name: 'New Agenda', appertainTo: userId });
 
       expect(response.status).toBe(403);
       expect(response.body.error).toBe('Access denied');
@@ -166,13 +166,13 @@ describe('Agenda Integration tests', () => {
 
     test('should return 403 if access denied', async () => {
       const { userId } = await createUser('int-user-13', 'int-user-13@test.com');
-      const { token: token2 } = await createUser('int-user-14', 'int-user-14@test.com');
+      const { token: token2, userId: userId2 } = await createUser('int-user-14', 'int-user-14@test.com');
       const family = await createFamily(userId, 'Test Family 8');
 
       const response = await request(app)
         .post(`/api/agendas/${family.id}`)
         .set({ Authorization: token2 })
-        .send({ name: 'New Agenda' });
+        .send({ name: 'New Agenda', appertainTo: userId2 });
 
       expect(response.status).toBe(403);
       expect(response.body.error).toBe('Access denied');

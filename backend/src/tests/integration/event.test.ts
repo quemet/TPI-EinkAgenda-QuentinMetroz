@@ -32,8 +32,8 @@ const createFamily = async (userId: string, name: string) => {
   return family as { id: string };
 };
 
-const createAgenda = async (familyId: string, name: string) => {
-  const agenda = await Agenda.create({ name, familyId });
+const createAgenda = async (familyId: string, name: string, userId: string) => {
+  const agenda = await Agenda.create({ name, familyId, appertainTo: userId });
 
   return agenda as { id: string };
 };
@@ -63,7 +63,7 @@ describe('Event API Integration Tests', () => {
     test('should get all events for an agenda', async () => {
       const owner = await createUser('event-owner-1', 'event-owner-1@example.com');
       const family = await createFamily(owner.userId, 'Event Family 1');
-      const agenda = await createAgenda(family.id, 'Event Agenda 1');
+      const agenda = await createAgenda(family.id, 'Event Agenda 1', owner.userId);
       await createEvent(owner.token, agenda.id, validEventData);
 
       const response = await request(app)
@@ -80,7 +80,7 @@ describe('Event API Integration Tests', () => {
     test('should return 404 when no events exist for the agenda', async () => {
       const owner = await createUser('event-owner-2', 'event-owner-2@example.com');
       const family = await createFamily(owner.userId, 'Event Family 2');
-      const agenda = await createAgenda(family.id, 'Event Agenda 2');
+      const agenda = await createAgenda(family.id, 'Event Agenda 2', owner.userId);
 
       const response = await request(app)
         .get(`/api/events/agenda/${agenda.id}/events`)
@@ -116,7 +116,7 @@ describe('Event API Integration Tests', () => {
       const owner = await createUser('event-owner-5', 'event-owner-5@example.com');
       const outsider = await createUser('event-outsider-1', 'event-outsider-1@example.com');
       const family = await createFamily(owner.userId, 'Event Family 5');
-      const agenda = await createAgenda(family.id, 'Event Agenda 5');
+      const agenda = await createAgenda(family.id, 'Event Agenda 5', owner.userId);
 
       const response = await request(app)
         .get(`/api/events/agenda/${agenda.id}/events`)
@@ -131,7 +131,7 @@ describe('Event API Integration Tests', () => {
     test('should get event by ID', async () => {
       const owner = await createUser('event-owner-6', 'event-owner-6@example.com');
       const family = await createFamily(owner.userId, 'Event Family 6');
-      const agenda = await createAgenda(family.id, 'Event Agenda 6');
+      const agenda = await createAgenda(family.id, 'Event Agenda 6', owner.userId);
       const event = await createEvent(owner.token, agenda.id, validEventData);
 
       const response = await request(app)
@@ -170,7 +170,7 @@ describe('Event API Integration Tests', () => {
       const owner = await createUser('event-owner-9', 'event-owner-9@example.com');
       const outsider = await createUser('event-outsider-2', 'event-outsider-2@example.com');
       const family = await createFamily(owner.userId, 'Event Family 9');
-      const agenda = await createAgenda(family.id, 'Event Agenda 9');
+      const agenda = await createAgenda(family.id, 'Event Agenda 9', owner.userId);
       const event = await createEvent(owner.token, agenda.id, validEventData);
 
       const response = await request(app)
@@ -186,7 +186,7 @@ describe('Event API Integration Tests', () => {
     test('should create a new event', async () => {
       const owner = await createUser('event-owner-10', 'event-owner-10@example.com');
       const family = await createFamily(owner.userId, 'Event Family 10');
-      const agenda = await createAgenda(family.id, 'Event Agenda 10');
+      const agenda = await createAgenda(family.id, 'Event Agenda 10', owner.userId);
 
       const response = await request(app)
         .post(`/api/events/agenda/${agenda.id}/events`)
@@ -215,7 +215,7 @@ describe('Event API Integration Tests', () => {
     test('should return 422 for invalid event data', async () => {
       const owner = await createUser('event-owner-12', 'event-owner-12@example.com');
       const family = await createFamily(owner.userId, 'Event Family 12');
-      const agenda = await createAgenda(family.id, 'Event Agenda 12');
+      const agenda = await createAgenda(family.id, 'Event Agenda 12', owner.userId);
 
       const response = await request(app)
         .post(`/api/events/agenda/${agenda.id}/events`)
@@ -245,7 +245,7 @@ describe('Event API Integration Tests', () => {
       const owner = await createUser('event-owner-14', 'event-owner-14@example.com');
       const outsider = await createUser('event-outsider-3', 'event-outsider-3@example.com');
       const family = await createFamily(owner.userId, 'Event Family 14');
-      const agenda = await createAgenda(family.id, 'Event Agenda 14');
+      const agenda = await createAgenda(family.id, 'Event Agenda 14', owner.userId);
 
       const response = await request(app)
         .post(`/api/events/agenda/${agenda.id}/events`)
@@ -261,7 +261,7 @@ describe('Event API Integration Tests', () => {
     test('should update an existing event', async () => {
       const owner = await createUser('event-owner-15', 'event-owner-15@example.com');
       const family = await createFamily(owner.userId, 'Event Family 15');
-      const agenda = await createAgenda(family.id, 'Event Agenda 15');
+      const agenda = await createAgenda(family.id, 'Event Agenda 15', owner.userId);
       const event = await createEvent(owner.token, agenda.id, validEventData);
 
       const updatedEvent = {
@@ -298,7 +298,7 @@ describe('Event API Integration Tests', () => {
     test('should return 422 for invalid event data', async () => {
       const owner = await createUser('event-owner-17', 'event-owner-17@example.com');
       const family = await createFamily(owner.userId, 'Event Family 17');
-      const agenda = await createAgenda(family.id, 'Event Agenda 17');
+      const agenda = await createAgenda(family.id, 'Event Agenda 17', owner.userId);
       const event = await createEvent(owner.token, agenda.id, validEventData);
 
       const response = await request(app)
@@ -326,7 +326,7 @@ describe('Event API Integration Tests', () => {
       const owner = await createUser('event-owner-19', 'event-owner-19@example.com');
       const outsider = await createUser('event-outsider-4', 'event-outsider-4@example.com');
       const family = await createFamily(owner.userId, 'Event Family 19');
-      const agenda = await createAgenda(family.id, 'Event Agenda 19');
+      const agenda = await createAgenda(family.id, 'Event Agenda 19', owner.userId);
       const event = await createEvent(owner.token, agenda.id, validEventData);
 
       const response = await request(app)
@@ -343,7 +343,7 @@ describe('Event API Integration Tests', () => {
     test('should delete an existing event', async () => {
       const owner = await createUser('event-owner-20', 'event-owner-20@example.com');
       const family = await createFamily(owner.userId, 'Event Family 20');
-      const agenda = await createAgenda(family.id, 'Event Agenda 20');
+      const agenda = await createAgenda(family.id, 'Event Agenda 20', owner.userId);
       const event = await createEvent(owner.token, agenda.id, validEventData);
 
       const response = await request(app)
@@ -385,7 +385,7 @@ describe('Event API Integration Tests', () => {
       const owner = await createUser('event-owner-23', 'event-owner-23@example.com');
       const outsider = await createUser('event-outsider-5', 'event-outsider-5@example.com');
       const family = await createFamily(owner.userId, 'Event Family 23');
-      const agenda = await createAgenda(family.id, 'Event Agenda 23');
+      const agenda = await createAgenda(family.id, 'Event Agenda 23', owner.userId);
       const event = await createEvent(owner.token, agenda.id, validEventData);
 
       const response = await request(app)
